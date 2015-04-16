@@ -1,4 +1,4 @@
-import skimage.filter
+import skimage.filters
 import skimage.measure
 from skimage.morphology import remove_small_objects as _remove_small_objects
 from skimage.morphology import disk, binary_closing, watershed, dilation
@@ -110,7 +110,7 @@ def equalize_adaptive(image, n_tiles=8, clip_limit=0.01, name='equalize_adaptive
 
 def gaussian_filter(image, sigma=0.4, name='gaussian_filter'):
 
-    gauss = skimage.filter.gaussian_filter(image.image_array, sigma=sigma)
+    gauss = skimage.filters.gaussian_filter(image.image_array, sigma=sigma)
 
     ia = ImageArray(gauss, name)
     ia.history = image.history + [name]
@@ -120,12 +120,12 @@ def gaussian_filter(image, sigma=0.4, name='gaussian_filter'):
 
 @make_named_transform('find_edges')
 def find_edges(ndarray):
-    return skimage.filter.sobel(ndarray)
+    return skimage.filters.sobel(ndarray)
 
 @make_named_transform('thresh_otsu')
 def threshold_otsu(ndarray, mult=1):
 
-    otsu_value = skimage.filter.threshold_otsu(ndarray)
+    otsu_value = skimage.filters.threshold_otsu(ndarray)
 
     return ndarray > mult * otsu_value
 
