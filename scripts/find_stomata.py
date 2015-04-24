@@ -3,6 +3,7 @@
 import os
 import sys
 import math
+import timeit
 import argparse
 import unittest
 
@@ -10,12 +11,16 @@ import numpy as np
 
 from nose.tools import raises
 
+import cv2
+
 import scipy.misc
 import scipy.ndimage as nd
 
 import skimage.measure
 import skimage.filters
 import skimage.morphology
+
+from protoimg.region import Region
 
 from util import safe_mkdir
 from jicimagelib.io import FileBackend
@@ -118,176 +123,6 @@ def threshold_otsu(image, mult=1):
 
     return scaled_image.astype(np.uint8)
 
-# NOTES:
-
-# history
-
-# type mangling
-
-class Region(object):
-    """Class representing a particular point of interest in an image, 
-    represented as a bitmask with 1 indicating areas in the region."""
-
-    def __init__(self, bitmap_array):
-        bitmap_values = set(np.unique(bitmap_array))
-        if len(bitmap_values - set([0, 1])):
-            raise Exception('Region bitmap must have only 0 and 1 values')
-
-        self.bitmap_array = bitmap_array.astype(bool)
-
-    @classmethod
-    def from_id_array(cls, id_array, id):
-        """Initialise from an array where each unique value represents a
-        region."""
-
-        base_array = np.zeros(id_array.shape)
-        array_coords = np.where(id_array == id)
-        base_array[array_coords] = 1
-
-        return cls(base_array)
-
-    @property
-    def inner(self):
-        inner_array = nd.morphology.binary_erosion(self.bitmap_array)
-        return Region(inner_array)
-
-    @property
-    def border(self):
-        border_array = self.bitmap_array - self.inner.bitmap_array
-        return Region(border_array)
-
-    @property
-    def convex_hull(self):
-        hull_array = skimage.morphology.convex_hull_image(self.bitmap_array)
-        return Region(hull_array)
-
-    @property
-    def area(self):
-        return np.count_nonzero(self.bitmap_array)
-
-    @property
-    def coord_list(self):
-        return np.where(self.bitmap_array == True)
-
-    @property
-    def perimeter(self):
-        return self.border.area
-
-    def dilate(self, iterations=1):
-        dilated_array = nd.morphology.binary_dilation(self.bitmap_array, 
-                                                      iterations=iterations)
-        return Region(dilated_array)
-
-    def __repr__(self):
-        return self.bitmap_array.__repr__()
-
-    def __str__(self):
-        return self.bitmap_array.__str__()
-
-class RegionTestCase(unittest.TestCase):
-
-    def test_region(self):
-
-        test_array = np.array([[0, 1, 1],
-                               [0, 0, 1],
-                               [0, 0, 0]])
-
-        region = Region(test_array)
-
-        bitmap_array = region.bitmap_array
-
-        self.assertFalse(bitmap_array[0, 0])
-        self.assertTrue(bitmap_array[0, 1])
-        self.assertEqual(bitmap_array.shape, (3, 3))
-
-def test_region_from_id_array():
-    id_array = np.array([[0, 0, 0],
-                         [1, 1, 1],
-                         [2, 2, 2]])
-
-    region_1 = Region.from_id_array(id_array, 1)
-
-    assert(region_1.bitmap_array[0, 0] == False)
-    assert(region_1.bitmap_array[1, 0] == True)
-    assert(region_1.bitmap_array[2, 0] == False)
-
-    assert(region_1.area == 3)
-
-def test_region_area():
-
-    test_array = np.array([[0, 1, 1],
-                           [0, 0, 1],
-                           [0, 0, 0]])
-
-    region = Region(test_array)
-
-    assert(region.area == 3)
-
-def test_region_perimeter():
-
-    test_array = np.array([[0, 0, 0, 0, 0],
-                           [0, 1, 1, 1, 0],
-                           [0, 1, 1, 1, 0],
-                           [0, 1, 1, 1, 0],
-                           [0, 0, 0, 0, 0]])
-
-    region = Region(test_array)
-
-    assert(region.perimeter == 8)
-
-def test_region_border():
-
-    test_array = np.array([[0, 0, 0, 0, 0],
-                           [0, 1, 1, 1, 0],
-                           [0, 1, 1, 1, 0],
-                           [0, 1, 1, 1, 0],
-                           [0, 0, 0, 0, 0]])
-
-    region = Region(test_array)
-
-    border_array = np.array([[0, 0, 0, 0, 0],
-                             [0, 1, 1, 1, 0],
-                             [0, 1, 0, 1, 0],
-                             [0, 1, 1, 1, 0],
-                             [0, 0, 0, 0, 0]])
-
-    border_region = Region(border_array)
-
-    assert(np.array_equal(region.border.bitmap_array, border_region.bitmap_array))
-
-def test_region_inner():
-
-    test_array = np.array([[0, 0, 0, 0, 0],
-                           [0, 1, 1, 1, 0],
-                           [0, 1, 1, 1, 0],
-                           [0, 1, 1, 1, 0],
-                           [0, 0, 0, 0, 0]])
-
-    region = Region(test_array)
-
-    inner_array = np.array([[0, 0, 0, 0, 0],
-                            [0, 0, 0, 0, 0],
-                            [0, 0, 1, 0, 0],
-                            [0, 0, 0, 0, 0],
-                            [0, 0, 0, 0, 0]])
-
-    inner_region = Region(inner_array)
-
-    assert(np.array_equal(region.inner.bitmap_array, inner_region.bitmap_array))
-
-def devlet():
-    test_array = np.array([[0, 0, 0, 0, 0],
-                           [0, 1, 1, 1, 0],
-                           [0, 1, 1, 1, 0],
-                           [0, 1, 1, 1, 0],
-                           [0, 0, 0, 0, 0]])
-
-    region = Region(test_array)
-
-    inner = nd.morphology.binary_erosion(region.bitmap_array)
-    
-    sys.exit(0)
-
 @raises(Exception)
 def test_region_constructor():
 
@@ -297,12 +132,11 @@ def test_region_constructor():
 
     Region(test_array)
 
-def find_stomata(confocal_file):
-    """Given the confocal image file, find stomata in it."""
+def find_candidate_regions(raw_z_stack):
+    """Given the z stack, find regions in the image which are candidate stomata.
+    Return a dictionary of regions, keyed by their ID."""
 
-    image_collection = unpack_data(confocal_file)
 
-    raw_z_stack = image_collection.zstack_array(s=30)
     smoothed_z_stack = gaussian_filter(raw_z_stack, (3, 3, 1))
 
     projection = max_intensity_projection(smoothed_z_stack)
@@ -311,6 +145,82 @@ def find_stomata(confocal_file):
 
     connected_components = find_connected_components(im_thresholded)
 
+    return {ccID : Region.from_id_array(connected_components, ccID)
+            for ccID in np.unique(connected_components)}
+
+def draw_square(array, coords, colour):
+
+    x, y = coords
+    for xo in range(-5, 5):
+        for yo in range(-5, 5):
+            array[x+xo, y+yo] = colour
+    
+def apply_mask(image, mask_region):
+
+    masked_image = np.zeros(image.shape)
+
+    for point in mask_region.coord_list:
+        masked_image[point] = image[point]
+
+    return masked_image
+        
+def find_stomata(confocal_file):
+    """Given the confocal image file, find stomata in it."""
+
+    image_collection = unpack_data(confocal_file)
+    raw_z_stack = image_collection.zstack_array(s=30)
+    candidate_regions = find_candidate_regions(raw_z_stack)
+
+    stomata_region = candidate_regions[8].convex_hull
+
+    smoothed_z_stack = gaussian_filter(raw_z_stack, (3, 3, 1))
+    projection = max_intensity_projection(smoothed_z_stack)
+
+    dilated_stomata = stomata_region.dilate(iterations=20)
+    annotated_image = apply_mask(projection, dilated_stomata)
+
+    scipy.misc.imsave('stomata.png', annotated_image)
+
+    # _, _, zdim = raw_z_stack.shape
+
+    # for z in range(zdim):
+    #     scipy.misc.imsave('plane{}.png'.format(z), apply_mask(raw_z_stack[:,:,z], stomata_region))
+
+def more_stuff():
+    border = stomata_region.border
+
+    border_points = np.array(border.coord_list)
+    border_points = np.array([(b, a) for a, b in border_points])
+
+
+    for x in range(10):
+        center, bounds, angle = cv2.fitEllipse(border_points)
+        box = (center, bounds, angle)
+
+    for x in range(10):
+        em = skimage.measure.EllipseModel()
+        em.estimate(border_points)
+
+    annotated_array = 255 * border.bitmap_array.astype(np.uint8)
+
+    cv2.ellipse(annotated_array, box, 255)
+    #draw_square(annotated_array, center, 255)
+
+    angle_r = 2 * math.pi * (angle / 360)
+    x, y = center
+
+    print box
+
+    for xo in range(100):
+        yo = xo * -math.sin(angle_r)
+        annotated_array[x+xo,y+yo] = 255
+
+    scipy.misc.imsave('ellipse.png', annotated_array)
+
+    
+
+
+def stuff():
     def shape_factor(region):
         S = region.area
         L = region.perimeter
