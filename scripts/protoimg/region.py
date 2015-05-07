@@ -1,6 +1,7 @@
 
 import unittest
 
+from nose.tools import raises
 import scipy.ndimage as nd
 import numpy as np
 import skimage
@@ -167,3 +168,12 @@ def test_region_inner():
     inner_region = Region(inner_array)
 
     assert(np.array_equal(region.inner.bitmap_array, inner_region.bitmap_array))
+
+@raises(Exception)
+def test_region_constructor():
+
+    test_array = np.array([[0, 1, 2],
+                           [0, 0, 1],
+                           [0, 0, 0]])
+
+    Region(test_array)

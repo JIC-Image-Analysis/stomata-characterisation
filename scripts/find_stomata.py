@@ -9,7 +9,7 @@ import unittest
 
 import numpy as np
 
-from nose.tools import raises
+
 
 import cv2
 
@@ -123,15 +123,6 @@ def threshold_otsu(image, mult=1):
 
     return scaled_image.astype(np.uint8)
 
-@raises(Exception)
-def test_region_constructor():
-
-    test_array = np.array([[0, 1, 2],
-                           [0, 0, 1],
-                           [0, 0, 0]])
-
-    Region(test_array)
-
 def find_candidate_regions(raw_z_stack):
     """Given the z stack, find regions in the image which are candidate stomata.
     Return a dictionary of regions, keyed by their ID."""
@@ -156,6 +147,8 @@ def draw_square(array, coords, colour):
             array[x+xo, y+yo] = colour
     
 def apply_mask(image, mask_region):
+    """Given an original image and a mask consisting of boolean values, return an
+    image obtained by applying the mask to the image."""
 
     masked_image = np.zeros(image.shape)
 
@@ -163,7 +156,37 @@ def apply_mask(image, mask_region):
         masked_image[point] = image[point]
 
     return masked_image
-        
+
+def parameterise_single_stomata(stomata_region):
+    """Given a region of interest representing a stomata, parameterise the
+    stomata in that region."""
+
+
+    stomata_border = stomata_region.border
+    scipy.misc.imsave('stomata_border.png', stomata_region.border.bitmap_array)
+    border_points = np.array(stomata_border.coord_list)
+    transposed_points = np.array([(a, b) for (b, a) in border_points])
+    center, bounds, angle = cv2.fitEllipse(transposed_points)
+    box = (center, bounds, angle)
+
+    xdim, ydim = stomata_region.bitmap_array.shape
+    annotated_array = np.zeros((xdim, ydim, 3), dtype=np.uint8)
+    annotated_array[stomata_border.coord_elements] = 255, 255, 255
+    cv2.ellipse(annotated_array, box, (0, 255, 0))
+
+    scipy.misc.imsave('annotated_image.png', annotated_array)
+
+def save_masked_stomata(raw_z_stack, stomata_region):
+    """Save an image with only the stomata of interest."""
+
+    smoothed_z_stack = gaussian_filter(raw_z_stack, (3, 3, 1))
+    projection = max_intensity_projection(smoothed_z_stack)
+
+    dilated_stomata = stomata_region.dilate(iterations=10)
+    stomata_image = apply_mask(projection, dilated_stomata)
+    scipy.misc.imsave('stomata.png', stomata_image)
+
+
 def find_stomata(confocal_file):
     """Given the confocal image file, find stomata in it."""
 
@@ -172,124 +195,14 @@ def find_stomata(confocal_file):
     candidate_regions = find_candidate_regions(raw_z_stack)
 
     stomata_region = candidate_regions[8].convex_hull
+    save_masked_stomata(raw_z_stack, stomata_region)
 
-    smoothed_z_stack = gaussian_filter(raw_z_stack, (3, 3, 1))
-    projection = max_intensity_projection(smoothed_z_stack)
-
-    dilated_stomata = stomata_region.dilate(iterations=20)
-    annotated_image = apply_mask(projection, dilated_stomata)
-
-    scipy.misc.imsave('stomata.png', annotated_image)
-
-    # _, _, zdim = raw_z_stack.shape
-
-    # for z in range(zdim):
-    #     scipy.misc.imsave('plane{}.png'.format(z), apply_mask(raw_z_stack[:,:,z], stomata_region))
-
-def more_stuff():
-    border = stomata_region.border
-
-    border_points = np.array(border.coord_list)
-    border_points = np.array([(b, a) for a, b in border_points])
-
-
-    for x in range(10):
-        center, bounds, angle = cv2.fitEllipse(border_points)
-        box = (center, bounds, angle)
-
-    for x in range(10):
-        em = skimage.measure.EllipseModel()
-        em.estimate(border_points)
-
-    annotated_array = 255 * border.bitmap_array.astype(np.uint8)
-
-    cv2.ellipse(annotated_array, box, 255)
-    #draw_square(annotated_array, center, 255)
-
-    angle_r = 2 * math.pi * (angle / 360)
-    x, y = center
-
-    print box
-
-    for xo in range(100):
-        yo = xo * -math.sin(angle_r)
-        annotated_array[x+xo,y+yo] = 255
-
-    scipy.misc.imsave('ellipse.png', annotated_array)
-
-    
-
-
-def stuff():
-    def shape_factor(region):
-        S = region.area
-        L = region.perimeter
-
-        return (4 * math.pi * S) / (L * L)
-
-    composite = np.zeros(connected_components.shape)
-
-    def separate_regions():
-        for ccID in np.unique(connected_components):
-            r = Region.from_id_array(connected_components, ccID)
-            dr = r.dilate(10)
-            h = r.convex_hull
-            pre_ratio = float(r.area) / r.perimeter
-            after_ratio = float(dr.area) / dr.perimeter
-
-            #print ccID, pre_ratio, after_ratio / pre_ratio, float(h.area) / h.perimeter
-            print ccID, h.area, h.perimeter, shape_factor(h)
-            scipy.misc.imsave('dr{}.png'.format(ccID), dr.border.bitmap_array)
-            scipy.misc.imsave('h{}.png'.format(ccID), r.convex_hull.border.bitmap_array)
-
-            composite[h.coord_list] = ccID
-
-        scipy.misc.imsave('composite.png', composite)
-
-    def fit_measure(ccID):
-        r = Region.from_id_array(connected_components, ccID)
-        h = r.convex_hull
-        em = skimage.measure.EllipseModel()
-        data = zip(*h.border.coord_list)
-        em.estimate(np.array(data))
-        
-        residuals = em.residuals(np.array(data))
-
-        return np.inner(residuals, residuals) / (len(residuals) ** 2)
-
-
-    stomata_ids = []
-
-    def print_all_residuals():
-        for ccID in np.unique(connected_components):
-            r = Region.from_id_array(connected_components, ccID)
-            if 100 < r.convex_hull.perimeter < 400:
-                fm = fit_measure(ccID)
-                print ccID, r.convex_hull.perimeter, fm
-                if fm < 0.01:
-                    stomata_ids.append(ccID)
-
-    print_all_residuals()
-
-    xdim, ydim = connected_components.shape
-    annotated = np.zeros((xdim, ydim, 3))
-    for ccID in stomata_ids:
-        r = Region.from_id_array(connected_components, ccID)
-        h = r.convex_hull
-        em = skimage.measure.EllipseModel()
-        data = zip(*h.border.coord_list)
-        em.estimate(np.array(data))
-        t_range = np.linspace(0, 2 * math.pi, 500)
-        predicted = em.predict_xy(t_range).astype(np.uint16)
-        annotated[h.border.coord_list] = 255, 255, 255
-        annotated[zip(*predicted)] = 255, 0, 0
-    scipy.misc.imsave('annotated.png', annotated)
+    parameterise_single_stomata(stomata_region)
 
 def main():
 
     parser = argparse.ArgumentParser(__doc__)
     parser.add_argument('confocal_file', help='File containing confocal data')
-
 
     args = parser.parse_args()
 
