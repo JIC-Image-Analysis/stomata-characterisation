@@ -194,6 +194,7 @@ def find_stomata(confocal_file):
     raw_z_stack = image_collection.zstack_array(s=30)
     candidate_regions = find_candidate_regions(raw_z_stack)
 
+    # We know that region 8 is a stomata
     stomata_region = candidate_regions[8].convex_hull
     save_masked_stomata(raw_z_stack, stomata_region)
 
