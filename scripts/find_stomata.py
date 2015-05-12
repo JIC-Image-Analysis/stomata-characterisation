@@ -157,21 +157,24 @@ def apply_mask(image, mask_region):
 
     return masked_image
 
+def ellipse_box(region):
+    """Return the box representing the ellipse (center, bounds, angle)."""
+
+    border = region.border
+    border_points = np.array(border.coord_list)
+    transposed_points = np.array([(a, b) for (b, a) in border_points])
+    return cv2.fitEllipse(transposed_points)
+
 def parameterise_single_stomata(stomata_region):
     """Given a region of interest representing a stomata, parameterise the
     stomata in that region."""
 
-
-    stomata_border = stomata_region.border
     scipy.misc.imsave('stomata_border.png', stomata_region.border.bitmap_array)
-    border_points = np.array(stomata_border.coord_list)
-    transposed_points = np.array([(a, b) for (b, a) in border_points])
-    center, bounds, angle = cv2.fitEllipse(transposed_points)
-    box = (center, bounds, angle)
+    box = ellipse_box(stomata_region)
 
     xdim, ydim = stomata_region.bitmap_array.shape
     annotated_array = np.zeros((xdim, ydim, 3), dtype=np.uint8)
-    annotated_array[stomata_border.coord_elements] = 255, 255, 255
+    annotated_array[stomata_region.border.coord_elements] = 255, 255, 255
     cv2.ellipse(annotated_array, box, (0, 255, 0))
 
     scipy.misc.imsave('annotated_image.png', annotated_array)
