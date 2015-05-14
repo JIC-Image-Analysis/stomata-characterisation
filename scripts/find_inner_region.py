@@ -15,10 +15,9 @@ from jicimagelib.geometry import Point2D
 
 from find_stomata import (
     unpack_data,
-    find_candidate_regions,
+    find_stomata,
     ellipse_box,
-    gaussian_filter,
-    max_intensity_projection,
+    smoothed_max_intensity_projection,
 )
 
 def angle2vector(angle):
@@ -46,15 +45,8 @@ def quadrant_lines_from_box(box):
 
     return p1, p2, p3, p4
 
-def line_profile(confocal_file):
+def line_profile(image, stomata_region):
     """Return minor and major line profiles of a stomata."""
-
-    image_collection = unpack_data(confocal_file)
-    raw_z_stack = image_collection.zstack_array(s=30)
-    candidate_regions = find_candidate_regions(raw_z_stack)
-
-    # We know that region 8 is a stomata.
-    stomata_region = candidate_regions[8].convex_hull
 
     # Annotated array to plot on top of.
     xdim, ydim = stomata_region.bitmap_array.shape
@@ -68,20 +60,24 @@ def line_profile(confocal_file):
     cv2.line(annotated_array, p3.astuple(), p4.astuple(), (255, 0, 0), 1)
     scipy.misc.imsave('quadrant_lines_image.png', annotated_array)
 
-    # Image to be analyzed.
-    smoothed_z_stack = gaussian_filter(raw_z_stack, (3, 3, 1))
-    projection = max_intensity_projection(smoothed_z_stack)
-
     ski_p1 = p1[1], p1[0]
     ski_p2 = p2[1], p2[0]
     ski_p3 = p3[1], p3[0]
     ski_p4 = p4[1], p4[0]
     
-    minor_profile = skimage.measure.profile_line(projection, ski_p1, ski_p2)
-    major_profile = skimage.measure.profile_line(projection, ski_p3, ski_p4)
+    minor_profile = skimage.measure.profile_line(image, ski_p1, ski_p2)
+    major_profile = skimage.measure.profile_line(image, ski_p3, ski_p4)
 
     return minor_profile, major_profile
     
+
+def find_inner_region(raw_zstack):
+    """Given an image collection, identify the inner region of a stomata."""
+    # We know that region 8 is a stomata
+    stomata_region = find_stomata(raw_zstack, region_id=8)
+    projection = smoothed_max_intensity_projection(raw_zstack)
+    minor_profile, major_profile = line_profile(projection, stomata_region)
+
     
 
 def main():
@@ -91,11 +87,11 @@ def main():
 
     args = parser.parse_args()
 
-    unpack_data(args.confocal_file)
-    minor_profile, major_profile = line_profile(args.confocal_file)
+    image_collection = unpack_data(args.confocal_file)
+    raw_zstack = image_collection.zstack_array(s=30)
+    find_inner_region(raw_zstack)
 
-    for height in minor_profile:
-        print "X"*height
+
 
 #############################################################################
 # Tests

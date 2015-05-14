@@ -179,29 +179,35 @@ def parameterise_single_stomata(stomata_region):
 
     scipy.misc.imsave('annotated_image.png', annotated_array)
 
+def smoothed_max_intensity_projection(raw_z_stack):
+    """Return the smoothed max intensity projection."""
+    smoothed_z_stack = gaussian_filter(raw_z_stack, (3, 3, 1))
+    projection = max_intensity_projection(smoothed_z_stack)
+    return projection
+
 def save_masked_stomata(raw_z_stack, stomata_region):
     """Save an image with only the stomata of interest."""
 
-    smoothed_z_stack = gaussian_filter(raw_z_stack, (3, 3, 1))
-    projection = max_intensity_projection(smoothed_z_stack)
+    projection = smoothed_max_intensity_projection(raw_z_stack)
 
     dilated_stomata = stomata_region.dilate(iterations=10)
     stomata_image = apply_mask(projection, dilated_stomata)
     scipy.misc.imsave('stomata.png', stomata_image)
 
 
-def find_stomata(confocal_file):
-    """Given the confocal image file, find stomata in it."""
-
-    image_collection = unpack_data(confocal_file)
-    raw_z_stack = image_collection.zstack_array(s=30)
+def find_stomata(raw_z_stack, region_id):
+    """Return a region representing a stomata.
+    
+    Given an raw z stack, find stomata in it.
+    """
     candidate_regions = find_candidate_regions(raw_z_stack)
 
-    # We know that region 8 is a stomata
-    stomata_region = candidate_regions[8].convex_hull
+    stomata_region = candidate_regions[region_id].convex_hull
     save_masked_stomata(raw_z_stack, stomata_region)
 
     parameterise_single_stomata(stomata_region)
+    
+    return stomata_region
 
 def main():
 
@@ -210,8 +216,11 @@ def main():
 
     args = parser.parse_args()
 
-    unpack_data(args.confocal_file)
-    find_stomata(args.confocal_file)
+    image_collection = unpack_data(args.confocal_file)
+    raw_zstack = image_collection.zstack_array(s=30)
+
+    # We know that region 8 is a stomata
+    find_stomata(raw_zstack, region_id=8)
 
 if __name__ == "__main__":
     main()
