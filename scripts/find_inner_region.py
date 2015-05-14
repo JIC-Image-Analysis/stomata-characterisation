@@ -52,13 +52,13 @@ def annotated_region_image(region):
     annotated_array[region.border.coord_elements] = 255, 255, 255
     return annotated_array
 
-def save_major_and_minor_lines(annotated_array, box):
+def save_major_and_minor_lines(annotated_array, box, name):
     """Save image with minor and major lines."""
     p1, p2, p3, p4 = quadrant_lines_from_box(box)
 
     cv2.line(annotated_array, p1.astype("int").astuple(), p2.astype("int").astuple(), (0, 255, 0), 1)
     cv2.line(annotated_array, p3.astype("int").astuple(), p4.astype("int").astuple(), (255, 0, 0), 1)
-    scipy.misc.imsave('quadrant_lines_image.png', annotated_array)
+    scipy.misc.imsave(name, annotated_array)
 
 def line_profile(image, box):
     """Return minor and major line profiles of a stomata."""
@@ -104,13 +104,26 @@ def find_inner_region(raw_zstack):
     stomata_region = find_stomata(raw_zstack, region_id=8)
     projection = smoothed_max_intensity_projection(raw_zstack)
     annotated_array = annotated_region_image(stomata_region)
-    box = ellipse_box(stomata_region)
-    save_major_and_minor_lines(annotated_array, box)
-    minor_profile, major_profile = line_profile(projection, box)
 
+    box = ellipse_box(stomata_region)
+    center, bounds, angle = box
+    width, height = bounds
+
+#   save_major_and_minor_lines(annotated_array, box, 'quadrant_lines_image.png')
+    minor_profile, major_profile = line_profile(projection, box)
     minor_rel_length = find_relative_profile_length(minor_profile)
+    major_rel_length = find_relative_profile_length(major_profile)
+
+    # Clean the annotated array.
+    inner_bounds = width * minor_rel_length, height * major_rel_length
+    inner_box = center, inner_bounds, angle
+
+    print("org box: {}".format(box))
+    print("inner box: {}".format(inner_box))
+
+    save_major_and_minor_lines(annotated_array, inner_box, 'inner_box.png')
+
     
-    print("Minor relative length: {}".format(minor_rel_length))
 
 
 
