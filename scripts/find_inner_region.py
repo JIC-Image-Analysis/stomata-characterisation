@@ -45,21 +45,26 @@ def quadrant_lines_from_box(box):
 
     return p1, p2, p3, p4
 
-def line_profile(image, stomata_region):
-    """Return minor and major line profiles of a stomata."""
-
-    # Annotated array to plot on top of.
-    xdim, ydim = stomata_region.bitmap_array.shape
+def annotated_region_image(region):
+    """Return an annotated region image to plot on top of."""
+    xdim, ydim = region.bitmap_array.shape
     annotated_array = np.zeros((xdim, ydim, 3), dtype=np.uint8)
-    annotated_array[stomata_region.border.coord_elements] = 255, 255, 255
+    annotated_array[region.border.coord_elements] = 255, 255, 255
+    return annotated_array
 
-    box = ellipse_box(stomata_region)
+def save_major_and_minor_lines(annotated_array, box):
+    """Save image with minor and major lines."""
     p1, p2, p3, p4 = quadrant_lines_from_box(box)
 
     cv2.line(annotated_array, p1.astype("int").astuple(), p2.astype("int").astuple(), (0, 255, 0), 1)
     cv2.line(annotated_array, p3.astype("int").astuple(), p4.astype("int").astuple(), (255, 0, 0), 1)
     scipy.misc.imsave('quadrant_lines_image.png', annotated_array)
 
+def line_profile(image, box):
+    """Return minor and major line profiles of a stomata."""
+    p1, p2, p3, p4 = quadrant_lines_from_box(box)
+
+    # Convert to cv2 points to scikit image points.
     ski_p1 = p1[1], p1[0]
     ski_p2 = p2[1], p2[0]
     ski_p3 = p3[1], p3[0]
@@ -95,10 +100,13 @@ def find_relative_profile_length(profile):
 
 def find_inner_region(raw_zstack):
     """Given an image collection, identify the inner region of a stomata."""
-    # We know that region 8 is a stomata
+    # We know that region 8 is a stomata.
     stomata_region = find_stomata(raw_zstack, region_id=8)
     projection = smoothed_max_intensity_projection(raw_zstack)
-    minor_profile, major_profile = line_profile(projection, stomata_region)
+    annotated_array = annotated_region_image(stomata_region)
+    box = ellipse_box(stomata_region)
+    save_major_and_minor_lines(annotated_array, box)
+    minor_profile, major_profile = line_profile(projection, box)
 
     minor_rel_length = find_relative_profile_length(minor_profile)
     
