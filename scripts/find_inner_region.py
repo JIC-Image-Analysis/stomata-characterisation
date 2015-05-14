@@ -25,17 +25,17 @@ def angle2vector(angle):
     radians = (math.pi / 180.0) * angle
     return Point2D( math.cos(radians), math.sin(radians) )
 
+def line(center, angle, length):
+    """Return the two points representing the line."""
+    center = Point2D(center)
+    direction = angle2vector(angle)
+    half_length = length/2
+    p1 = center - (direction * half_length)
+    p2 = center + (direction * half_length)
+    return p1, p2
+
 def quadrant_lines_from_box(box):
     """Return the lines that cut the box into four quadrants."""
-
-    def line(center, angle, length):
-        """Return the two points representing the line."""
-        center = Point2D(center)
-        direction = angle2vector(angle)
-        half_length = length/2
-        p1 = center - (direction * half_length)
-        p2 = center + (direction * half_length)
-        return p1.astype("int"), p2.astype("int")
 
     center, bounds, angle = box
     width, height = bounds
@@ -56,8 +56,8 @@ def line_profile(image, stomata_region):
     box = ellipse_box(stomata_region)
     p1, p2, p3, p4 = quadrant_lines_from_box(box)
 
-    cv2.line(annotated_array, p1.astuple(), p2.astuple(), (0, 255, 0), 1)
-    cv2.line(annotated_array, p3.astuple(), p4.astuple(), (255, 0, 0), 1)
+    cv2.line(annotated_array, p1.astype("int").astuple(), p2.astype("int").astuple(), (0, 255, 0), 1)
+    cv2.line(annotated_array, p3.astype("int").astuple(), p4.astype("int").astuple(), (255, 0, 0), 1)
     scipy.misc.imsave('quadrant_lines_image.png', annotated_array)
 
     ski_p1 = p1[1], p1[0]
@@ -70,6 +70,28 @@ def line_profile(image, stomata_region):
 
     return minor_profile, major_profile
     
+def find_relative_profile_length(profile):
+    """Return relative cut points from a line profile."""
+
+    # Find relative cut points in the profile.
+    otsu_cutoff = skimage.filters.threshold_otsu(profile)
+    thresholded_profile = profile > otsu_cutoff
+    relative_cut_points = []
+    current = True
+    for i, high_intensity in enumerate(thresholded_profile):
+        if current == high_intensity:
+            continue
+        relative_cut_points.append(i/float(len(profile)))
+        current = not current
+    assert len(relative_cut_points) == 2, \
+         "Expected 2 relative cut points, not: {}".format(len(relative_cut_points))
+
+    # Make the cuts symmetric by averaging.
+    rel1 = 1.0 - relative_cut_points[0]
+    rel2 = relative_cut_points[1]
+    relative_length = (rel1 + rel2) / 2.0
+    return relative_length
+
 
 def find_inner_region(raw_zstack):
     """Given an image collection, identify the inner region of a stomata."""
@@ -77,6 +99,12 @@ def find_inner_region(raw_zstack):
     stomata_region = find_stomata(raw_zstack, region_id=8)
     projection = smoothed_max_intensity_projection(raw_zstack)
     minor_profile, major_profile = line_profile(projection, stomata_region)
+
+    minor_rel_length = find_relative_profile_length(minor_profile)
+    
+    print("Minor relative length: {}".format(minor_rel_length))
+
+
 
     
 
