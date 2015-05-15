@@ -8,17 +8,29 @@ from nose.tools import assert_almost_equal
 import numpy as np
 import cv2
 import scipy
+import skimage
 import skimage.transform
 import skimage.measure
+import skimage.morphology
 
 from jicimagelib.geometry import Point2D
+from jicimagelib.transform import transformation
 
 from find_stomata import (
     unpack_data,
     find_stomata,
     ellipse_box,
     smoothed_max_intensity_projection,
+    threshold_otsu,
 )
+
+from protoimg.region import Region
+
+
+#############################################################################
+# Working with the lines from the stomata ellipse fitting
+# to find the inner region.
+#############################################################################
 
 def angle2vector(angle):
     """Return the unit vector representation of the angle as x, y pair."""
@@ -132,11 +144,8 @@ def find_relative_profile_length(profile):
     return relative_length
 
 
-
-
-
-def find_inner_region(raw_zstack):
-    """Given an image collection, identify the inner region of a stomata."""
+def find_inner_region_using_lines(raw_zstack):
+    """Given an raw z-stack, identify the inner region of a stomata."""
     # We know that region 8 is a stomata.
     stomata_region = find_stomata(raw_zstack, region_id=8)
     projection = smoothed_max_intensity_projection(raw_zstack)
@@ -157,6 +166,104 @@ def find_inner_region(raw_zstack):
 
     save_major_and_minor_lines(annotated_array, inner_box, 'inner_box.png')
 
+
+#############################################################################
+# Using edge detection on the stomata to find the inner region.
+#############################################################################
+
+@transformation
+def cutout_region(image, region):
+    """Cut out a region from an image."""
+    return image * region.bitmap_array
+
+@transformation
+def find_edges(image, mask=None):
+    """Find edges using sobel filter."""
+    edges = skimage.filters.sobel(image, mask)
+    print np.min(edges), np.max(edges), edges.dtype
+    return skimage.img_as_ubyte(edges)
+
+@transformation
+def remove_small_objects(image, min_size=50):
+    binary_im = image > 0
+    binary_im =  skimage.morphology.remove_small_objects(binary_im, min_size)
+    return image*binary_im
+
+@transformation
+def dilation(image, salem=None):
+    binary_im = image > 0
+    binary_im =  skimage.morphology.binary_dilation(binary_im, salem)
+    binary_im = binary_im.astype(np.uint8)
+    return binary_im*255
+    
+@transformation
+def fill_small_holes(image, max_size=50):
+    binary_im = image > 0
+    binary_im = binary_im == False  # Invert.
+    binary_im =  skimage.morphology.remove_small_objects(binary_im, max_size)
+    binary_im = binary_im == False  # And back to positive.
+    binary_im = binary_im.astype(np.uint8)
+    return binary_im*255
+
+@transformation
+def skeletonize(image):
+    binary_im = image > 0
+    binary_im = skimage.morphology.skeletonize(binary_im)
+    binary_im = binary_im.astype(np.uint8)
+    return binary_im*255
+    
+@transformation
+def invert(image):
+    tmp_max = np.max(image)
+    tmp_im = np.ones(tmp_max.shape, dtype=image.dtype)
+    return tmp_im * tmp_max - image
+    
+@transformation
+def find_connected_components(image, connectivity=None, background=None):
+    connected_components = skimage.measure.label(image,
+        connectivity=connectivity, return_num=False)
+    return connected_components.astype(np.uint8)
+
+
+def find_inner_region_using_edge_detection(raw_zstack):
+    """Given an raw z-stack, identify the inner region of a stomata."""
+    # We know that region 8 is a stomata.
+    stomata_region = find_stomata(raw_zstack, region_id=8)
+    projection = smoothed_max_intensity_projection(raw_zstack)
+    stomata_projection = cutout_region(projection, stomata_region)
+    edges = find_edges(stomata_projection, stomata_region.bitmap_array)
+    otsu = threshold_otsu(edges)
+    no_small = remove_small_objects(otsu)
+    dilated = dilation(no_small,
+        salem=skimage.morphology.disk(2))
+    filled = fill_small_holes(dilated, 100)
+    skeleton = skeletonize(filled)
+    thick_skeleton = dilation(skeleton)
+    components = invert(thick_skeleton)
+    connected_components = find_connected_components(components)
+
+    stomata_box = ellipse_box(stomata_region)  # center, bounds, angle
+    y, x = stomata_box[0]  # Transpose opencv point.
+    center = Point2D(x, y).astype('int')
+    inner_region_id = connected_components[center.x][center.y]
+
+    inner_region = Region.from_id_array(connected_components, inner_region_id)
+    inner_box = ellipse_box(inner_region)
+
+    xdim, ydim = inner_region.bitmap_array.shape
+    annotated_array = np.dstack((projection, projection, projection))
+    cv2.ellipse(annotated_array, inner_box, (0, 255, 0), 2)
+    annotated_array[inner_region.border.coord_elements] = 255 , 0, 0
+    cv2.ellipse(annotated_array, stomata_box, (0, 255, 0), 2)
+    annotated_array[stomata_region.border.coord_elements] = 255 , 0, 0
+
+    scipy.misc.imsave('annotated_inner_region.png', annotated_array)
+
+
+def find_inner_region(raw_zstack):
+    """Given an image collection, identify the inner region of a stomata."""
+#   find_inner_region_using_lines(raw_zstack)
+    find_inner_region_using_edge_detection(raw_zstack)
     
 
 
