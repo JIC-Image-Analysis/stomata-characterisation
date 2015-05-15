@@ -56,6 +56,7 @@ def save_major_and_minor_lines(annotated_array, box, name):
     """Save image with minor and major lines."""
     p1, p2, p3, p4 = quadrant_lines_from_box(box)
 
+    cv2.ellipse(annotated_array, box, (0, 0, 255))
     cv2.line(annotated_array, p1.astype("int").astuple(), p2.astype("int").astuple(), (0, 255, 0), 1)
     cv2.line(annotated_array, p3.astype("int").astuple(), p4.astype("int").astuple(), (255, 0, 0), 1)
     scipy.misc.imsave(name, annotated_array)
@@ -75,7 +76,7 @@ def line_profile(image, box):
 
     return minor_profile, major_profile
     
-def find_relative_profile_length(profile):
+def old_find_relative_profile_length(profile):
     """Return relative cut points from a line profile."""
 
     # Find relative cut points in the profile.
@@ -97,6 +98,42 @@ def find_relative_profile_length(profile):
     relative_length = (rel1 + rel2) / 2.0
     return relative_length
 
+def find_relative_profile_length(profile):
+    """Return relative cut points from a line profile."""
+    new_profile = profile.copy()
+    new_profile.shape = len(profile), 1
+    sobel_filter = scipy.ndimage.filters.sobel(new_profile, axis=0)
+    scipy.misc.imsave('sobel_line.png', sobel_filter)
+    sobel_filter.shape = len(profile),
+    sobel_min = np.min(sobel_filter)
+    extra = abs(sobel_min)
+
+    negative_sobel_cut_index = None
+    positive_sobel_cut_index = None
+    sobel_cutoff = 20
+    for i, p in enumerate(sobel_filter):
+        if p < -sobel_cutoff:
+            negative_sobel_cut_index = i
+        if p > sobel_cutoff:
+            positive_sobel_cut_index = i
+            break
+#   # Visual validation.
+#   for i, (p, f) in enumerate(zip(profile, sobel_filter)):
+#       s = "X"*p
+#       if i in [negative_sobel_cut_index, positive_sobel_cut_index]:
+#           print '{:3.0f} {} ***'.format(f, s)
+#       else:
+#           print '{:3.0f} {}'.format(f, s)
+
+    d = float(len(sobel_filter))
+    rel1 = negative_sobel_cut_index/d
+    rel2 = positive_sobel_cut_index/d
+    relative_length = (rel1 + rel2) / 2.0
+    return relative_length
+
+
+
+
 
 def find_inner_region(raw_zstack):
     """Given an image collection, identify the inner region of a stomata."""
@@ -117,9 +154,6 @@ def find_inner_region(raw_zstack):
     # Clean the annotated array.
     inner_bounds = width * minor_rel_length, height * major_rel_length
     inner_box = center, inner_bounds, angle
-
-    print("org box: {}".format(box))
-    print("inner box: {}".format(inner_box))
 
     save_major_and_minor_lines(annotated_array, inner_box, 'inner_box.png')
 
