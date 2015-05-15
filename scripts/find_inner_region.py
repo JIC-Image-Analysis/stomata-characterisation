@@ -180,7 +180,6 @@ def cutout_region(image, region):
 def find_edges(image, mask=None):
     """Find edges using sobel filter."""
     edges = skimage.filters.sobel(image, mask)
-    print np.min(edges), np.max(edges), edges.dtype
     return skimage.img_as_ubyte(edges)
 
 @transformation
