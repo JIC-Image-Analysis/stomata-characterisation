@@ -20,7 +20,7 @@ import skimage.measure
 import skimage.filters
 import skimage.morphology
 
-from protoimg.region import Region
+from jicimagelib.region import Region
 
 from util import safe_mkdir
 from jicimagelib.io import FileBackend
@@ -169,10 +169,10 @@ def parameterise_single_stomata(stomata_region):
     """Given a region of interest representing a stomata, parameterise the
     stomata in that region."""
 
-    scipy.misc.imsave('stomata_border.png', stomata_region.border.bitmap_array)
+    scipy.misc.imsave('stomata_border.png', stomata_region.border.bitmap)
     box = ellipse_box(stomata_region)
 
-    xdim, ydim = stomata_region.bitmap_array.shape
+    xdim, ydim = stomata_region.bitmap.shape
     annotated_array = np.zeros((xdim, ydim, 3), dtype=np.uint8)
     annotated_array[stomata_region.border.coord_elements] = 255, 255, 255
     cv2.ellipse(annotated_array, box, (0, 255, 0))

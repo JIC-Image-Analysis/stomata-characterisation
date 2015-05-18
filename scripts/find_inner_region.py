@@ -16,6 +16,8 @@ import skimage.morphology
 from jicimagelib.geometry import Point2D
 from jicimagelib.transform import transformation
 
+from jicimagelib.region import Region
+
 from find_stomata import (
     unpack_data,
     find_stomata,
@@ -23,8 +25,6 @@ from find_stomata import (
     smoothed_max_intensity_projection,
     threshold_otsu,
 )
-
-from protoimg.region import Region
 
 
 #############################################################################
@@ -59,7 +59,7 @@ def quadrant_lines_from_box(box):
 
 def annotated_region_image(region):
     """Return an annotated region image to plot on top of."""
-    xdim, ydim = region.bitmap_array.shape
+    xdim, ydim = region.bitmap.shape
     annotated_array = np.zeros((xdim, ydim, 3), dtype=np.uint8)
     annotated_array[region.border.coord_elements] = 255, 255, 255
     return annotated_array
@@ -174,7 +174,7 @@ def find_inner_region_using_lines(raw_zstack):
 @transformation
 def cutout_region(image, region):
     """Cut out a region from an image."""
-    return image * region.bitmap_array
+    return image * region.bitmap
 
 @transformation
 def find_edges(image, mask=None):
@@ -230,7 +230,7 @@ def find_inner_region_using_edge_detection(raw_zstack):
     stomata_region = find_stomata(raw_zstack, region_id=8)
     projection = smoothed_max_intensity_projection(raw_zstack)
     stomata_projection = cutout_region(projection, stomata_region)
-    edges = find_edges(stomata_projection, stomata_region.bitmap_array)
+    edges = find_edges(stomata_projection, stomata_region.bitmap)
     otsu = threshold_otsu(edges)
     no_small = remove_small_objects(otsu)
     dilated = dilation(no_small,
@@ -249,7 +249,7 @@ def find_inner_region_using_edge_detection(raw_zstack):
     inner_region = Region.from_id_array(connected_components, inner_region_id)
     inner_box = ellipse_box(inner_region)
 
-    xdim, ydim = inner_region.bitmap_array.shape
+    xdim, ydim = inner_region.bitmap.shape
     annotated_array = np.dstack((projection, projection, projection))
     cv2.ellipse(annotated_array, inner_box, (0, 255, 0), 2)
     annotated_array[inner_region.border.coord_elements] = 255 , 0, 0
