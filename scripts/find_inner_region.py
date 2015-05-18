@@ -61,7 +61,7 @@ def annotated_region_image(region):
     """Return an annotated region image to plot on top of."""
     xdim, ydim = region.bitmap.shape
     annotated_array = np.zeros((xdim, ydim, 3), dtype=np.uint8)
-    annotated_array[region.border.coord_elements] = 255, 255, 255
+    annotated_array[region.border.index_arrays] = 255, 255, 255
     return annotated_array
 
 def save_major_and_minor_lines(annotated_array, box, name):
@@ -246,15 +246,15 @@ def find_inner_region_using_edge_detection(raw_zstack):
     center = Point2D(x, y).astype('int')
     inner_region_id = connected_components[center.x][center.y]
 
-    inner_region = Region.from_id_array(connected_components, inner_region_id)
+    inner_region = Region.select_from_array(connected_components, inner_region_id)
     inner_box = ellipse_box(inner_region)
 
     xdim, ydim = inner_region.bitmap.shape
     annotated_array = np.dstack((projection, projection, projection))
     cv2.ellipse(annotated_array, inner_box, (0, 255, 0), 2)
-    annotated_array[inner_region.border.coord_elements] = 255 , 0, 0
+    annotated_array[inner_region.border.index_arrays] = 255 , 0, 0
     cv2.ellipse(annotated_array, stomata_box, (0, 255, 0), 2)
-    annotated_array[stomata_region.border.coord_elements] = 255 , 0, 0
+    annotated_array[stomata_region.border.index_arrays] = 255 , 0, 0
 
     scipy.misc.imsave('annotated_inner_region.png', annotated_array)
 

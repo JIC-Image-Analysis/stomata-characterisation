@@ -136,7 +136,7 @@ def find_candidate_regions(raw_z_stack):
 
     connected_components = find_connected_components(im_thresholded)
 
-    return {ccID : Region.from_id_array(connected_components, ccID)
+    return {ccID : Region.select_from_array(connected_components, ccID)
             for ccID in np.unique(connected_components)}
 
 def draw_square(array, coords, colour):
@@ -152,7 +152,7 @@ def apply_mask(image, mask_region):
 
     masked_image = np.zeros(image.shape)
 
-    for point in mask_region.coord_list:
+    for point in mask_region.points:
         masked_image[point] = image[point]
 
     return masked_image
@@ -161,7 +161,7 @@ def ellipse_box(region):
     """Return the box representing the ellipse (center, bounds, angle)."""
 
     border = region.border
-    border_points = np.array(border.coord_list)
+    border_points = np.array(border.points)
     transposed_points = np.array([(a, b) for (b, a) in border_points])
     return cv2.fitEllipse(transposed_points)
 
@@ -174,7 +174,7 @@ def parameterise_single_stomata(stomata_region):
 
     xdim, ydim = stomata_region.bitmap.shape
     annotated_array = np.zeros((xdim, ydim, 3), dtype=np.uint8)
-    annotated_array[stomata_region.border.coord_elements] = 255, 255, 255
+    annotated_array[stomata_region.border.index_arrays] = 255, 255, 255
     cv2.ellipse(annotated_array, box, (0, 255, 0))
 
     scipy.misc.imsave('annotated_image.png', annotated_array)
