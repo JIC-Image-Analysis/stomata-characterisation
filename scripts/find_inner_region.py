@@ -224,10 +224,10 @@ def find_connected_components(image, connectivity=None, background=None):
     return connected_components.astype(np.uint8)
 
 
-def find_inner_region_using_edge_detection(raw_zstack):
+def find_inner_region_using_edge_detection(raw_zstack, region_id, out_fn='annotated_inner_region.png'):
     """Given an raw z-stack, identify the inner region of a stomata."""
     # We know that region 8 is a stomata.
-    stomata_region = find_stomata(raw_zstack, region_id=8)
+    stomata_region = find_stomata(raw_zstack, region_id=region_id)
     projection = smoothed_max_intensity_projection(raw_zstack)
     stomata_projection = cutout_region(projection, stomata_region)
     edges = find_edges(stomata_projection, stomata_region.bitmap)
@@ -259,10 +259,10 @@ def find_inner_region_using_edge_detection(raw_zstack):
     scipy.misc.imsave('annotated_inner_region.png', annotated_array)
 
 
-def find_inner_region(raw_zstack):
+def find_inner_region(raw_zstack, region_id):
     """Given an image collection, identify the inner region of a stomata."""
 #   find_inner_region_using_lines(raw_zstack)
-    find_inner_region_using_edge_detection(raw_zstack)
+    find_inner_region_using_edge_detection(raw_zstack, region_id)
     
 
 
@@ -278,7 +278,7 @@ def main():
 
     image_collection = unpack_data(args.confocal_file)
     raw_zstack = image_collection.zstack_array(s=30)
-    find_inner_region(raw_zstack)
+    find_inner_region(raw_zstack, region_id=8)
 
 
 
