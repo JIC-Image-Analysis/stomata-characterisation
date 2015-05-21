@@ -63,7 +63,6 @@ def find_connected_components(image, neighbors=8, background=None):
                                                  background=background,
                                                  return_num=False)
 
-
     return Image.from_array(connected_components.astype(np.uint8))
 
 @transformation
@@ -213,14 +212,16 @@ def main():
 
     parser = argparse.ArgumentParser(__doc__)
     parser.add_argument('confocal_file', help='File containing confocal data')
+    parser.add_argument('series', type=int, help='Zero based series index')
+    parser.add_argument('region', type=int, help='Zero based region index')
 
     args = parser.parse_args()
 
     image_collection = unpack_data(args.confocal_file)
-    raw_zstack = image_collection.zstack_array(s=30)
+    raw_zstack = image_collection.zstack_array(s=args.series)
 
     # We know that region 8 is a stomata
-    find_stomata(raw_zstack, region_id=8)
+    find_stomata(raw_zstack, region_id=args.region)
 
 if __name__ == "__main__":
     main()

@@ -271,13 +271,15 @@ def main():
 
     parser = argparse.ArgumentParser(__doc__)
     parser.add_argument('confocal_file', help='File containing confocal data')
+    parser.add_argument('series', type=int, help='Zero based series index')
+    parser.add_argument('region', type=int, help='Zero based region index')
 
     args = parser.parse_args()
 
     image_collection = unpack_data(args.confocal_file)
-    raw_zstack = image_collection.zstack_array(s=30)
+    raw_zstack = image_collection.zstack_array(s=args.series)
     # We know that region 8 is a stomata.
-    stomata_region = find_stomata(raw_zstack, region_id=8)
+    stomata_region = find_stomata(raw_zstack, region_id=args.region)
     find_inner_region(raw_zstack, stomata_region, out_fn='annotated_inner_region.png')
 
 
