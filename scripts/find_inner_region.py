@@ -144,10 +144,9 @@ def find_relative_profile_length(profile):
     return relative_length
 
 
-def find_inner_region_using_lines(raw_zstack):
+def find_inner_region_using_lines(raw_zstack, stomata_region, out_fn):
     """Given an raw z-stack, identify the inner region of a stomata."""
     # We know that region 8 is a stomata.
-    stomata_region = find_stomata(raw_zstack, region_id=8)
     projection = smoothed_max_intensity_projection(raw_zstack)
     annotated_array = annotated_region_image(stomata_region)
 
@@ -164,7 +163,9 @@ def find_inner_region_using_lines(raw_zstack):
     inner_bounds = width * minor_rel_length, height * major_rel_length
     inner_box = center, inner_bounds, angle
 
-    save_major_and_minor_lines(annotated_array, inner_box, 'inner_box.png')
+    save_major_and_minor_lines(annotated_array, inner_box, out_fn)
+
+    return inner_box
 
 
 #############################################################################
@@ -259,8 +260,8 @@ def find_inner_region_using_edge_detection(raw_zstack, stomata_region, out_fn):
 
 def find_inner_region(raw_zstack, stomata_region, out_fn):
     """Given an image collection, identify the inner region of a stomata."""
-#   find_inner_region_using_lines(raw_zstack)
-    find_inner_region_using_edge_detection(raw_zstack, stomata_region, out_fn)
+    find_inner_region_using_lines(raw_zstack, stomata_region, out_fn)
+#   find_inner_region_using_edge_detection(raw_zstack, stomata_region, out_fn)
     
 
 
