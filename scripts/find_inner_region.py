@@ -73,7 +73,7 @@ def save_major_and_minor_lines(annotated_array, box, name):
     cv2.line(annotated_array, p3.astype("int").astuple(), p4.astype("int").astuple(), (255, 0, 0), 1)
     scipy.misc.imsave(name, annotated_array)
 
-def line_profile(image, box):
+def line_profile(image, box, linewidth=1):
     """Return minor and major line profiles of a stomata."""
     p1, p2, p3, p4 = quadrant_lines_from_box(box)
 
@@ -83,8 +83,10 @@ def line_profile(image, box):
     ski_p3 = p3[1], p3[0]
     ski_p4 = p4[1], p4[0]
     
-    minor_profile = skimage.measure.profile_line(image, ski_p1, ski_p2)
-    major_profile = skimage.measure.profile_line(image, ski_p3, ski_p4)
+    minor_profile = skimage.measure.profile_line(image, ski_p1, ski_p2,
+        linewidth=linewidth)
+    major_profile = skimage.measure.profile_line(image, ski_p3, ski_p4,
+        linewidth=linewidth)
 
     return minor_profile, major_profile
     
