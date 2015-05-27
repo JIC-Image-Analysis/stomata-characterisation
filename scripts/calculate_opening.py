@@ -18,6 +18,8 @@ STOMATA = (
     dict(region=20, series=range(8, 14))   # Stomata id 3
 )
 
+PLOT = True
+
 def ellipse_of_interest(image_collection, series, region):
     """Return the stomata ellipse box."""
     raw_zstack = image_collection.zstack_array(s=series)
@@ -33,7 +35,10 @@ def line_profile_x_values(image_collection, box):
 def line_profile_mid_point(image_collection, box):
     """Return line profile mid point."""
     xs = line_profile_x_values(image_collection, box)
-    return len(xs) / 2.0
+    mid_pt =  len(xs) / 2.0
+    if PLOT:
+        plt.axvline(x=mid_pt, c='m', linestyle='--')
+    return mid_pt
 
 def projected_average_line_profile(image_collection, series, box):
     """Return the z-stack projected average line profile."""
@@ -46,7 +51,12 @@ def projected_average_line_profile(image_collection, series, box):
             total = np.zeros(minor_profile.shape, dtype=float)
         total = total + minor_profile
         num_z_slices = num_z_slices + 1
-    return total / num_z_slices
+    average = total / num_z_slices
+
+    if PLOT:
+        xs = line_profile_x_values(image_collection, box)
+        plt.plot(xs, average)
+    return average
             
 
 def local_maxima(profile):
@@ -87,6 +97,8 @@ def midpoint_minima(mid_pt, profile):
             break
     xs = [left_min, right_min]
     ys = np.take(profile, xs)
+    if PLOT:
+        plt.plot(xs, ys, "ro")
     return Point2D(xs[0], ys[0]), Point2D(xs[1], ys[1])
 
 def midpoint_maximum(mid_pt, profile):
@@ -101,6 +113,8 @@ def midpoint_maximum(mid_pt, profile):
             prev_diff = diff
             maximum_x = x
             maximum_y = y
+    if PLOT:
+        plt.plot(maximum_x, maximum_y, "go")
     return Point2D(maximum_x, maximum_y)
     
 def distance(pt1, pt2):
@@ -109,12 +123,14 @@ def distance(pt1, pt2):
     d2 = diff * diff
     d = math.sqrt(d2)
     microns = d * 0.157
+    if PLOT:
+        y = min(pt1.y, pt2.y)
+        plt.plot([pt1.x, pt2.x],[y, y])
     return microns
 
 def calculate_opening(image_collection, series, box):
     """Calculate the opening of the stomata."""
 
-    xs = line_profile_x_values(image_collection, box)
     mid_pt = line_profile_mid_point(image_collection, box)
     average = projected_average_line_profile(image_collection, series, box)
     left_minima, right_minima = midpoint_minima(mid_pt, average)
@@ -122,14 +138,6 @@ def calculate_opening(image_collection, series, box):
     opening = distance(left_minima, right_minima)
     print("Opening: {} um".format(opening))
 
-    plt.plot(xs, average)
-    plt.axvline(x=mid_pt, c='m', linestyle='--')
-    plt.plot(maximum.x, maximum.y, "go")
-    plt.plot(left_minima.x, left_minima.y, "ro")
-    plt.plot(right_minima.x, right_minima.y, "ro")
-    plt.plot([left_minima.x, right_minima.x],
-        [min(left_minima.y, right_minima.y),
-        min(left_minima.y, right_minima.y)])
 
 def analyse_all(image_collection, stomata_id):
     """Analyse all stomata in a time series."""
