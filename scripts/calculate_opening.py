@@ -15,14 +15,14 @@ from find_stomata import unpack_data, find_stomata, ellipse_box
 from find_inner_region import line_profile
 
 STOMATA = (
-    dict(region=9, series=range(8, 14)),     # Stomata id 1
-    dict(region=14, series=range(8, 14)),    # Stomata id 2
-    dict(region=20, series=range(8, 14)),    # Stomata id 3
-    dict(region=8, series=range(15, 23)),    # Stomata id 4
-    dict(region=21, series=range(15, 23)),   # Stomata id 5
-    dict(region=17, series=range(15, 23)),   # Stomata id 6
+    dict(region=9, series=range(8, 15)),     # Stomata id 1
+    dict(region=14, series=range(8, 15)),    # Stomata id 2
+    dict(region=20, series=range(8, 15)),    # Stomata id 3
+    dict(region=8, series=range(15, 24)),    # Stomata id 4
+    dict(region=17, series=range(15, 24)),   # Stomata id 5
+    dict(region=21, series=range(15, 24)),   # Stomata id 6
                                              # Unable to identify stomata 7
-    dict(region=8, series=range(24, 35)),    # Stomata id 8
+    dict(region=8, series=range(24, 36)),    # Stomata id 8
 )
 
 PLOT = True
