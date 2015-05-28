@@ -103,19 +103,13 @@ def midpoint_minima(mid_pt, profile):
 
 def midpoint_maximum(mid_pt, profile):
     """Return the mid point maximum."""
-    max_xs, max_ys = xy_arrays(profile, local_maxima)
-    prev_diff = sys.maxint
-    maximum_x = None
-    maximum_y = None
-    for x, y in zip(max_xs, max_ys):
-        diff = abs(mid_pt - x)
-        if diff < prev_diff:
-            prev_diff = diff
-            maximum_x = x
-            maximum_y = y
-    if PLOT:
-        plt.plot(maximum_x, maximum_y, "go")
-    return Point2D(maximum_x, maximum_y)
+    left_min, right_min = midpoint_minima(mid_pt, profile)
+    profile_of_interest = profile[left_min.x:right_min.x+1]
+    max_xs, max_ys = xy_arrays(profile_of_interest, local_maxima)
+    assert len(max_xs) == 1, "More than one maxima in between two neighboring minima!"
+    max_xs[0] += left_min.x
+    plt.plot(max_xs, max_ys, "go")
+    return Point2D(max_xs[0], max_ys[0])
 
 def half_height(pt1, pt2):
     """Return the half height of the peak."""
@@ -257,7 +251,7 @@ def calculate_opening(image_collection, series, box):
         print("Distance: {:.2f} um".format(d))
         return d
     else:
-        print("Crazy stuff...")
+        print("Crazy stuff in series {}.".format(series))
         print("left mimima: {}".format(left_minima))
         print("maximum: {}".format(maximum))
         print("right mimima: {}".format(right_minima))
@@ -272,7 +266,6 @@ def analyse_all(image_collection, stomata_id):
         calculate_opening(image_collection, series, box)
     plt.show()
 
-
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(__doc__)
     parser.add_argument('confocal_file', help='File containing confocal data')
@@ -282,3 +275,4 @@ if __name__ == "__main__":
 
     image_collection = unpack_data(args.confocal_file)
     analyse_all(image_collection, args.stomata_id)
+    
