@@ -234,6 +234,19 @@ def peak_half_height(average, left_pt, right_pt):
             color=COLOR)
     return half_height_pt
     
+def opening_points(image_collection, series, box):
+    """Return the two points representing the opening."""
+    mid_pt = line_profile_mid_point(image_collection, box)
+    average = projected_average_line_profile(image_collection, series, box)
+    left_minima, right_minima = midpoint_minima(mid_pt, average)
+    maximum = midpoint_maximum(mid_pt, average)
+
+    assert left_minima.x < maximum.x, "Left minima to the right of the maximum."
+
+    left_half_height = peak_half_height(average, left_minima, maximum)
+    right_half_height = peak_half_height(average, maximum, right_minima)
+    return left_half_height, right_half_height
+
 def distance(pt1, pt2):
     """Return x-axis distance in microns."""
     diff = pt1.x - pt2.x
@@ -248,16 +261,8 @@ def distance(pt1, pt2):
 def calculate_opening(image_collection, series, box):
     """Calculate the opening of the stomata."""
 
-    mid_pt = line_profile_mid_point(image_collection, box)
-    average = projected_average_line_profile(image_collection, series, box)
-    left_minima, right_minima = midpoint_minima(mid_pt, average)
-    maximum = midpoint_maximum(mid_pt, average)
-
-    assert left_minima.x < maximum.x, "Left minima to the right of the maximum."
-
-    left_half_height = peak_half_height(average, left_minima, maximum)
-    right_half_height = peak_half_height(average, maximum, right_minima)
-    d = distance(left_half_height, right_half_height)
+    pt1, pt2 = opening_points(image_collection, series, box)
+    d = distance(pt1, pt2)
     print("Distance: {:.2f} um".format(d))
     return d
 
