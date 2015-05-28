@@ -15,9 +15,14 @@ from find_stomata import unpack_data, find_stomata, ellipse_box
 from find_inner_region import line_profile
 
 STOMATA = (
-    dict(region=9, series=range(8, 14)),   # Stomata id 1
-    dict(region=14, series=range(8, 14)),  # Stomata id 2
-    dict(region=20, series=range(8, 14))   # Stomata id 3
+    dict(region=9, series=range(8, 14)),     # Stomata id 1
+    dict(region=14, series=range(8, 14)),    # Stomata id 2
+    dict(region=20, series=range(8, 14)),    # Stomata id 3
+    dict(region=8, series=range(15, 23)),    # Stomata id 4
+    dict(region=21, series=range(15, 23)),   # Stomata id 5
+    dict(region=17, series=range(15, 23)),   # Stomata id 6
+                                             # Unable to identify stomata 7
+    dict(region=8, series=range(24, 35)),    # Stomata id 8
 )
 
 PLOT = True
@@ -101,7 +106,7 @@ def midpoint_minima(mid_pt, profile):
     xs = [left_min, right_min]
     ys = np.take(profile, xs)
     if PLOT:
-        plt.plot(xs, ys, marker="o", linestyle="_", color=COLOR)
+        plt.plot(xs, ys, marker="v", linestyle="_", color=COLOR)
     return Point2D(xs[0], ys[0]), Point2D(xs[1], ys[1])
 
 def midpoint_maximum(mid_pt, profile):
@@ -111,7 +116,7 @@ def midpoint_maximum(mid_pt, profile):
     max_xs, max_ys = xy_arrays(profile_of_interest, local_maxima)
     assert len(max_xs) == 1, "More than one maxima in between two neighboring minima!"
     max_xs[0] += left_min.x
-    plt.plot(max_xs, max_ys, marker="o", linestyle="_", color=COLOR)
+    plt.plot(max_xs, max_ys, marker="^", linestyle="_", color=COLOR)
     return Point2D(max_xs[0], max_ys[0])
 
 def half_height(pt1, pt2):
@@ -256,8 +261,7 @@ def calculate_opening(image_collection, series, box):
     print("Distance: {:.2f} um".format(d))
     return d
 
-
-def analyse_all(image_collection, stomata_id):
+def analyse(image_collection, stomata_id, timepoint):
     """Analyse all stomata in a time series."""
     first = STOMATA[stomata_id]["series"][0]
     region = STOMATA[stomata_id]["region"]
@@ -265,6 +269,8 @@ def analyse_all(image_collection, stomata_id):
     series_identifiers = STOMATA[stomata_id]["series"]
     colors = sns.cubehelix_palette(len(series_identifiers), start=0, light=0.8, reverse=True)
     for i, series in enumerate(series_identifiers):
+        if (timepoint is not None) and (timepoint != i):
+            continue
         global COLOR
         COLOR = colors[i]
         calculate_opening(image_collection, series, box)
@@ -274,9 +280,11 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(__doc__)
     parser.add_argument('confocal_file', help='File containing confocal data')
     parser.add_argument('stomata_id', type=int, help='Zero based stomata index')
+    parser.add_argument('-t', '--timepoint', type=int, default=None,
+        help='Zero based time point index')
 
     args = parser.parse_args()
 
     image_collection = unpack_data(args.confocal_file)
-    analyse_all(image_collection, args.stomata_id)
+    analyse(image_collection, args.stomata_id, args.timepoint)
     
