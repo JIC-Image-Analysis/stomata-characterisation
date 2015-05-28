@@ -25,7 +25,6 @@ STOMATA = (
     dict(region=8, series=range(24, 36)),    # Stomata id 8
 )
 
-PLOT = True
 COLOR = 'b'
 
 def ellipse_of_interest(image_collection, series, region):
@@ -40,15 +39,15 @@ def line_profile_x_values(image_collection, box):
     minor_profile, major_profile = line_profile(im, box)
     return range(len(minor_profile))
 
-def line_profile_mid_point(image_collection, box):
+def line_profile_mid_point(image_collection, box, plot=False):
     """Return line profile mid point."""
     xs = line_profile_x_values(image_collection, box)
     mid_pt =  len(xs) / 2.0
-    if PLOT:
+    if plot:
         plt.axvline(x=mid_pt, c='k', linestyle='--')
     return mid_pt
 
-def projected_average_line_profile(image_collection, series, box):
+def projected_average_line_profile(image_collection, series, box, plot=False):
     """Return the z-stack projected average line profile."""
     total = None
     num_z_slices = 0
@@ -61,7 +60,7 @@ def projected_average_line_profile(image_collection, series, box):
         num_z_slices = num_z_slices + 1
     average = total / num_z_slices
 
-    if PLOT:
+    if plot:
         xs = line_profile_x_values(image_collection, box)
         plt.plot(xs, average, color=COLOR)
     return average
@@ -93,7 +92,7 @@ def xy_arrays(profile, func):
     ys = np.take(profile, xs)
     return xs, ys
 
-def midpoint_minima(mid_pt, profile):
+def midpoint_minima(mid_pt, profile, plot=False):
     """Return the two minima surrounding the mid point."""
     min_xs, min_ys = xy_arrays(profile, local_minima)
     left_min = None
@@ -105,18 +104,19 @@ def midpoint_minima(mid_pt, profile):
             break
     xs = [left_min, right_min]
     ys = np.take(profile, xs)
-    if PLOT:
+    if plot:
         plt.plot(xs, ys, marker="v", linestyle="_", color=COLOR)
     return Point2D(xs[0], ys[0]), Point2D(xs[1], ys[1])
 
-def midpoint_maximum(mid_pt, profile):
+def midpoint_maximum(mid_pt, profile, plot=False):
     """Return the mid point maximum."""
     left_min, right_min = midpoint_minima(mid_pt, profile)
     profile_of_interest = profile[left_min.x:right_min.x+1]
     max_xs, max_ys = xy_arrays(profile_of_interest, local_maxima)
     assert len(max_xs) == 1, "More than one maxima in between two neighboring minima!"
     max_xs[0] += left_min.x
-    plt.plot(max_xs, max_ys, marker="^", linestyle="_", color=COLOR)
+    if plot:
+        plt.plot(max_xs, max_ys, marker="^", linestyle="_", color=COLOR)
     return Point2D(max_xs[0], max_ys[0])
 
 def half_height(pt1, pt2):
@@ -221,7 +221,7 @@ def test_optimised_point():
     assert round(p3.x, 2) == 7.0
     assert round(p3.y, 2) == 5.0
     
-def peak_half_height(average, left_pt, right_pt):
+def peak_half_height(average, left_pt, right_pt, plot=False):
     """Return the half peak height point."""
     target_height = half_height(left_pt, right_pt)
     x_offset = min(left_pt.x, right_pt.x)
@@ -229,40 +229,43 @@ def peak_half_height(average, left_pt, right_pt):
     left_pt, right_pt = closest_observed_points(ys, target_height)
     half_height_pt =  optimised_point(left_pt, right_pt, target_height)
     half_height_pt.x = half_height_pt.x + x_offset
-    if PLOT:
+    if plot:
         plt.plot(half_height_pt.x, half_height_pt.y, marker="o", linestyle="_",
             color=COLOR)
     return half_height_pt
     
-def opening_points(image_collection, series, box):
+def opening_points(image_collection, series, box, plot=False):
     """Return the two points representing the opening."""
-    mid_pt = line_profile_mid_point(image_collection, box)
-    average = projected_average_line_profile(image_collection, series, box)
-    left_minima, right_minima = midpoint_minima(mid_pt, average)
-    maximum = midpoint_maximum(mid_pt, average)
+    mid_pt = line_profile_mid_point(image_collection, box, plot=plot)
+    average = projected_average_line_profile(image_collection, series, box,
+        plot=plot)
+    left_minima, right_minima = midpoint_minima(mid_pt, average, plot=plot)
+    maximum = midpoint_maximum(mid_pt, average, plot=plot)
 
     assert left_minima.x < maximum.x, "Left minima to the right of the maximum."
 
-    left_half_height = peak_half_height(average, left_minima, maximum)
-    right_half_height = peak_half_height(average, maximum, right_minima)
+    left_half_height = peak_half_height(average, left_minima, maximum,
+        plot=plot)
+    right_half_height = peak_half_height(average, maximum, right_minima,
+        plot=plot)
     return left_half_height, right_half_height
 
-def distance(pt1, pt2):
+def distance(pt1, pt2, plot=False):
     """Return x-axis distance in microns."""
     diff = pt1.x - pt2.x
     d2 = diff * diff
     d = math.sqrt(d2)
     microns = d * 0.157
-    if PLOT:
+    if plot:
         y = min(pt1.y, pt2.y)
         plt.plot([pt1.x, pt2.x],[y, y], color=COLOR)
     return microns
 
-def calculate_opening(image_collection, series, box):
+def calculate_opening(image_collection, series, box, plot=False):
     """Calculate the opening of the stomata."""
 
-    pt1, pt2 = opening_points(image_collection, series, box)
-    d = distance(pt1, pt2)
+    pt1, pt2 = opening_points(image_collection, series, box, plot=plot)
+    d = distance(pt1, pt2, plot=plot)
     print("Distance: {:.2f} um".format(d))
     return d
 
@@ -278,7 +281,7 @@ def analyse(image_collection, stomata_id, timepoint):
             continue
         global COLOR
         COLOR = colors[i]
-        calculate_opening(image_collection, series, box)
+        calculate_opening(image_collection, series, box, plot=True)
     plt.show()
 
 if __name__ == "__main__":
