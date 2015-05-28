@@ -7,6 +7,8 @@ import math
 import numpy as np
 import matplotlib.pyplot as plt
 
+import seaborn as sns
+
 from jicimagelib.geometry import Point2D
 
 from find_stomata import unpack_data, find_stomata, ellipse_box
@@ -19,6 +21,7 @@ STOMATA = (
 )
 
 PLOT = True
+COLOR = 'b'
 
 def ellipse_of_interest(image_collection, series, region):
     """Return the stomata ellipse box."""
@@ -37,7 +40,7 @@ def line_profile_mid_point(image_collection, box):
     xs = line_profile_x_values(image_collection, box)
     mid_pt =  len(xs) / 2.0
     if PLOT:
-        plt.axvline(x=mid_pt, c='m', linestyle='--')
+        plt.axvline(x=mid_pt, c='k', linestyle='--')
     return mid_pt
 
 def projected_average_line_profile(image_collection, series, box):
@@ -55,7 +58,7 @@ def projected_average_line_profile(image_collection, series, box):
 
     if PLOT:
         xs = line_profile_x_values(image_collection, box)
-        plt.plot(xs, average)
+        plt.plot(xs, average, color=COLOR)
     return average
             
 
@@ -98,7 +101,7 @@ def midpoint_minima(mid_pt, profile):
     xs = [left_min, right_min]
     ys = np.take(profile, xs)
     if PLOT:
-        plt.plot(xs, ys, "ro")
+        plt.plot(xs, ys, marker="o", linestyle="_", color=COLOR)
     return Point2D(xs[0], ys[0]), Point2D(xs[1], ys[1])
 
 def midpoint_maximum(mid_pt, profile):
@@ -108,7 +111,7 @@ def midpoint_maximum(mid_pt, profile):
     max_xs, max_ys = xy_arrays(profile_of_interest, local_maxima)
     assert len(max_xs) == 1, "More than one maxima in between two neighboring minima!"
     max_xs[0] += left_min.x
-    plt.plot(max_xs, max_ys, "go")
+    plt.plot(max_xs, max_ys, marker="o", linestyle="_", color=COLOR)
     return Point2D(max_xs[0], max_ys[0])
 
 def half_height(pt1, pt2):
@@ -222,7 +225,8 @@ def peak_half_height(average, left_pt, right_pt):
     half_height_pt =  optimised_point(left_pt, right_pt, target_height)
     half_height_pt.x = half_height_pt.x + x_offset
     if PLOT:
-        plt.plot(half_height_pt.x, half_height_pt.y, 'mo')
+        plt.plot(half_height_pt.x, half_height_pt.y, marker="o", linestyle="_",
+            color=COLOR)
     return half_height_pt
     
 def distance(pt1, pt2):
@@ -233,7 +237,7 @@ def distance(pt1, pt2):
     microns = d * 0.157
     if PLOT:
         y = min(pt1.y, pt2.y)
-        plt.plot([pt1.x, pt2.x],[y, y])
+        plt.plot([pt1.x, pt2.x],[y, y], color=COLOR)
     return microns
 
 def calculate_opening(image_collection, series, box):
@@ -244,17 +248,13 @@ def calculate_opening(image_collection, series, box):
     left_minima, right_minima = midpoint_minima(mid_pt, average)
     maximum = midpoint_maximum(mid_pt, average)
 
-    if left_minima.x < maximum.x:
-        left_half_height = peak_half_height(average, left_minima, maximum)
-        right_half_height = peak_half_height(average, maximum, right_minima)
-        d = distance(left_half_height, right_half_height)
-        print("Distance: {:.2f} um".format(d))
-        return d
-    else:
-        print("Crazy stuff in series {}.".format(series))
-        print("left mimima: {}".format(left_minima))
-        print("maximum: {}".format(maximum))
-        print("right mimima: {}".format(right_minima))
+    assert left_minima.x < maximum.x, "Left minima to the right of the maximum."
+
+    left_half_height = peak_half_height(average, left_minima, maximum)
+    right_half_height = peak_half_height(average, maximum, right_minima)
+    d = distance(left_half_height, right_half_height)
+    print("Distance: {:.2f} um".format(d))
+    return d
 
 
 def analyse_all(image_collection, stomata_id):
@@ -262,7 +262,11 @@ def analyse_all(image_collection, stomata_id):
     first = STOMATA[stomata_id]["series"][0]
     region = STOMATA[stomata_id]["region"]
     box = ellipse_of_interest(image_collection, first, region)
-    for series in STOMATA[stomata_id]["series"]:
+    series_identifiers = STOMATA[stomata_id]["series"]
+    colors = sns.cubehelix_palette(len(series_identifiers), start=0, light=0.8, reverse=True)
+    for i, series in enumerate(series_identifiers):
+        global COLOR
+        COLOR = colors[i]
         calculate_opening(image_collection, series, box)
     plt.show()
 
