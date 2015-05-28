@@ -18,8 +18,10 @@ from find_inner_region import line_profile, quadrant_lines_from_box
 AutoWrite.on = False
 
 #FIRST_REGION_ID, SERIES = 9, range(8, 14)   # Stomata id 1
-FIRST_REGION_ID, SERIES = 14, range(8, 14)  # Stomata id 2
+#FIRST_REGION_ID, SERIES = 14, range(8, 14)  # Stomata id 2
 #FIRST_REGION_ID, SERIES = 20, range(8, 14)  # Stomata id 3
+
+FIRST_REGION_ID, SERIES = 8, range(15, 23)  # Stomata id 3
 
 #FIRST_REGION_ID, SERIES = 8, range(24, 35)  # Stomata id?
 
