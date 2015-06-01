@@ -13,17 +13,7 @@ from jicimagelib.geometry import Point2D
 
 from find_stomata import unpack_data, find_stomata, ellipse_box
 from find_inner_region import line_profile
-
-STOMATA = (
-    dict(region=9, series=range(8, 15)),     # Stomata id 1
-    dict(region=14, series=range(8, 15)),    # Stomata id 2
-    dict(region=20, series=range(8, 15)),    # Stomata id 3
-    dict(region=8, series=range(15, 24)),    # Stomata id 4
-    dict(region=17, series=range(15, 24)),   # Stomata id 5
-    dict(region=21, series=range(15, 24)),   # Stomata id 6
-                                             # Unable to identify stomata 7
-    dict(region=8, series=range(24, 36)),    # Stomata id 8
-)
+from util import stomata_lookup
 
 COLOR = 'b'
 
@@ -271,10 +261,9 @@ def calculate_opening(image_collection, series, box, plot=False):
 
 def analyse(image_collection, stomata_id, timepoint):
     """Analyse all stomata in a time series."""
-    first = STOMATA[stomata_id]["series"][0]
-    region = STOMATA[stomata_id]["region"]
-    box = ellipse_of_interest(image_collection, first, region)
-    series_identifiers = STOMATA[stomata_id]["series"]
+    region_id, series_identifiers = stomata_lookup(stomata_id)
+    first = series_identifiers[0]
+    box = ellipse_of_interest(image_collection, first, region_id)
     colors = sns.cubehelix_palette(len(series_identifiers), start=0, light=0.8, reverse=True)
     for i, series in enumerate(series_identifiers):
         if (timepoint is not None) and (timepoint != i):

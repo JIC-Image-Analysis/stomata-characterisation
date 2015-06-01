@@ -22,8 +22,8 @@ import skimage.morphology
 
 from jicimagelib.region import Region
 
-from util import safe_mkdir
-from jicimagelib.io import FileBackend
+from util import safe_mkdir, stomata_lookup
+from jicimagelib.io import FileBackend, AutoName
 from jicimagelib.image import DataManager, Image
 from jicimagelib.transform import transformation
 
@@ -168,7 +168,9 @@ def parameterise_single_stomata(stomata_region):
     """Given a region of interest representing a stomata, parameterise the
     stomata in that region."""
 
-    scipy.misc.imsave('stomata_border.png', stomata_region.border.bitmap)
+    scipy.misc.imsave(os.path.join(AutoName.directory, 'stomata_border.png'),
+        stomata_region.border.bitmap)
+
     box = ellipse_box(stomata_region)
 
     xdim, ydim = stomata_region.bitmap.shape
@@ -176,7 +178,8 @@ def parameterise_single_stomata(stomata_region):
     annotated_array[stomata_region.border.index_arrays] = 255, 255, 255
     cv2.ellipse(annotated_array, box, (0, 255, 0))
 
-    scipy.misc.imsave('annotated_image.png', annotated_array)
+    scipy.misc.imsave(os.path.join(AutoName.directory, 'annotated_image.png'),
+        annotated_array)
 
 def smoothed_max_intensity_projection(raw_z_stack):
     """Return the smoothed max intensity projection."""
@@ -191,7 +194,8 @@ def save_masked_stomata(raw_z_stack, stomata_region):
 
     dilated_stomata = stomata_region.dilate(iterations=10)
     stomata_image = apply_mask(projection, dilated_stomata)
-    scipy.misc.imsave('stomata.png', stomata_image)
+    scipy.misc.imsave(os.path.join(AutoName.directory, 'stomata.png'),
+        stomata_image)
 
 
 def find_stomata(raw_z_stack, region_id):
@@ -214,8 +218,14 @@ def main():
     parser.add_argument('confocal_file', help='File containing confocal data')
     parser.add_argument('series', type=int, help='Zero based series index')
     parser.add_argument('region', type=int, help='Zero based region index')
+    parser.add_argument('--output_dir', '-o', default=None, help="Output directory")
 
     args = parser.parse_args()
+
+    if args.output_dir:
+        if not os.path.isdir(args.output_dir):
+            os.mkdir(args.output_dir)
+        AutoName.directory = args.output_dir
 
     image_collection = unpack_data(args.confocal_file)
     raw_zstack = image_collection.zstack_array(s=args.series)
