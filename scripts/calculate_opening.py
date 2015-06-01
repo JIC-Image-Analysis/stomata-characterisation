@@ -10,6 +10,8 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 
 from jicimagelib.geometry import Point2D
+from jicimagelib.io import AutoWrite
+AutoWrite.on = False
 
 from find_stomata import unpack_data, find_stomata, ellipse_box
 from find_inner_region import line_profile
