@@ -254,26 +254,26 @@ def distance(pt1, pt2, plot=False):
         plt.plot([pt1.x, pt2.x],[y, y], color=COLOR)
     return microns
 
-def calculate_opening(image_collection, series, box, plot=False):
+def calculate_opening(image_collection, stomata_id, series_id, plot=False):
     """Calculate the opening of the stomata."""
-
-    pt1, pt2 = opening_points(image_collection, series, box, plot=plot)
+    region_id, series_identifiers = stomata_lookup(stomata_id)
+    first = series_identifiers[0]
+    box = ellipse_of_interest(image_collection, first, region_id)
+    pt1, pt2 = opening_points(image_collection, series_id, box, plot=plot)
     d = distance(pt1, pt2, plot=plot)
-    print("Distance: {:.2f} um".format(d))
     return d
 
 def analyse(image_collection, stomata_id, timepoint):
     """Analyse all stomata in a time series."""
     region_id, series_identifiers = stomata_lookup(stomata_id)
-    first = series_identifiers[0]
-    box = ellipse_of_interest(image_collection, first, region_id)
     colors = sns.cubehelix_palette(len(series_identifiers), start=0, light=0.8, reverse=True)
-    for i, series in enumerate(series_identifiers):
+    for i, series_id in enumerate(series_identifiers):
         if (timepoint is not None) and (timepoint != i):
             continue
         global COLOR
         COLOR = colors[i]
-        calculate_opening(image_collection, series, box, plot=True)
+        d = calculate_opening(image_collection, stomata_id, series_id, plot=True)
+        print("Distance: {:.2f} um".format(d))
     plt.show()
 
 if __name__ == "__main__":

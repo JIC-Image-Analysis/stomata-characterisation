@@ -41,5 +41,14 @@ class FunctionalTests(unittest.TestCase):
             fpath = os.path.join(TMP_DIR, fname)
             self.assertTrue(os.path.isfile(fpath))
 
+    def test_calculate_opening(self):
+        from scripts.util import unpack_data, stomata_lookup
+        from scripts.calculate_opening import calculate_opening
+        
+        region_id, series_ids = stomata_lookup(0)
+        image_collection = unpack_data(INPUT_FILE)
+        distance = calculate_opening(image_collection, 0, series_ids[0])
+        self.assertEqual(round(distance, 2), 1.24)
+        
 if __name__ == "__main__":
     unittest.main()
