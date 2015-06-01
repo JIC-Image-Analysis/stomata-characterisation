@@ -9,6 +9,13 @@ SCRIPTS_DIR = os.path.join(HERE, '..', 'scripts')
 INPUT_FILE = os.path.join(DATA_DIR, '2014-03-20-Lti6b-GFP-ABA-time-series.lif')
 TMP_DIR = os.path.join(HERE, 'tmp')
 
+class UnitTests(unittest.TestCase):
+    
+    def test_unpack_data(self):
+        from jicimagelib.image import ImageCollection
+        from scripts.util import unpack_data
+        image_collection = unpack_data(INPUT_FILE)
+        self.assertTrue(isinstance(image_collection, ImageCollection))
 
 class FunctionalTests(unittest.TestCase):
 
@@ -23,7 +30,6 @@ class FunctionalTests(unittest.TestCase):
         script = os.path.join(SCRIPTS_DIR, 'find_stomata.py')
         cmd = 'python {} {} 8 9 --output_dir {}'.format(
             script, INPUT_FILE, TMP_DIR)
-        print(cmd)
         os.system(cmd)
         for fname in ["1_max_intensity_projection.png",
             "2_threshold_otsu.png",

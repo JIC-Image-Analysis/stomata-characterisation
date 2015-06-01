@@ -22,27 +22,10 @@ import skimage.morphology
 
 from jicimagelib.region import Region
 
-from util import safe_mkdir, stomata_lookup
-from jicimagelib.io import FileBackend, AutoName, AutoWrite
-from jicimagelib.image import DataManager, Image
+from util import unpack_data, stomata_lookup
+from jicimagelib.io import AutoName, AutoWrite
+from jicimagelib.image import Image
 from jicimagelib.transform import transformation
-
-HERE = os.path.dirname(__file__)
-UNPACK = os.path.join(HERE, '..', 'data', 'unpack')
-
-def unpack_data(confocal_file):
-    """Unpack the file and return an image collection object."""
-    safe_mkdir(UNPACK)
-
-    backend = FileBackend(UNPACK)
-    data_manager = DataManager(backend)
-
-    data_manager.load(confocal_file)
-
-    #print data_manager.get_image_proxy(s=1)
-    image_collection = data_manager[0]
-
-    return image_collection
 
 def find_suitable_2D_image(z_stack):
     """From the z-stack, find a suitable 2D representation of the image."""
@@ -221,7 +204,7 @@ def main():
     parser.add_argument('confocal_file', help='File containing confocal data')
     parser.add_argument('series', type=int, help='Zero based series index')
     parser.add_argument('region', type=int, help='Zero based region index')
-    parser.add_argument('--output_dir', '-o', default=None, help="Output directory")
+    parser.add_argument('--output_dir', '-o', default='.', help="Output directory")
 
     args = parser.parse_args()
 

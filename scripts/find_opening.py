@@ -11,7 +11,7 @@ from jicimagelib.geometry import Point2D
 from jicimagelib.io import AutoWrite
 AutoWrite.on = False
 
-from find_stomata import unpack_data
+from util import unpack_data
 from find_inner_region import quadrant_lines_from_box
 from calculate_opening import STOMATA, ellipse_of_interest, opening_points
 

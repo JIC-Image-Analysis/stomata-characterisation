@@ -1,6 +1,13 @@
 import os
 import errno
 
+from jicimagelib.image import DataManager
+from jicimagelib.io import FileBackend
+
+HERE = os.path.dirname(__file__)
+UNPACK = os.path.join(HERE, '..', 'data', 'unpack')
+
+
 STOMATA = (
     dict(region=9, series=range(8, 15)),     # Stomata id 1
     dict(region=14, series=range(8, 15)),    # Stomata id 2
@@ -28,3 +35,18 @@ def safe_mkdir(dir_path):
         if e.errno != errno.EEXIST:
             print "Error creating directory %s" % dir_path
             sys.exit(2)
+
+def unpack_data(confocal_file):
+    """Unpack the file and return an image collection object."""
+    safe_mkdir(UNPACK)
+
+    backend = FileBackend(UNPACK)
+    data_manager = DataManager(backend)
+
+    data_manager.load(confocal_file)
+
+    #print data_manager.get_image_proxy(s=1)
+    image_collection = data_manager[0]
+
+    return image_collection
+

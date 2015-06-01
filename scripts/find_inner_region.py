@@ -18,8 +18,8 @@ from jicimagelib.transform import transformation
 
 from jicimagelib.region import Region
 
+from util import unpack_data
 from find_stomata import (
-    unpack_data,
     find_stomata,
     ellipse_box,
     smoothed_max_intensity_projection,

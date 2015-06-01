@@ -5,8 +5,8 @@ import argparse
 import scipy
 import skimage.transform
 
+from util import unpack_data
 from find_stomata import (
-    unpack_data,
     find_candidate_regions,
     ellipse_box,
     gaussian_filter,
