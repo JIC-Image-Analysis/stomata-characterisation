@@ -3,6 +3,8 @@ import errno
 
 import math
 
+import skimage.measure
+
 from nose.tools import assert_almost_equal
 
 from jicimagelib.image import DataManager
@@ -80,6 +82,22 @@ def minor_and_major_lines_from_box(box):
 
     return p1, p2, p3, p4
 
+def line_profile(image, box, linewidth=1):
+    """Return minor and major line profiles of an ellipse box."""
+    p1, p2, p3, p4 = minor_and_major_lines_from_box(box)
+
+    # Convert to cv2 points to scikit image points.
+    ski_p1 = p1[1], p1[0]
+    ski_p2 = p2[1], p2[0]
+    ski_p3 = p3[1], p3[0]
+    ski_p4 = p4[1], p4[0]
+    
+    minor_profile = skimage.measure.profile_line(image, ski_p1, ski_p2,
+        linewidth=linewidth)
+    major_profile = skimage.measure.profile_line(image, ski_p3, ski_p4,
+        linewidth=linewidth)
+
+    return minor_profile, major_profile
 
 #############################################################################
 # Tests

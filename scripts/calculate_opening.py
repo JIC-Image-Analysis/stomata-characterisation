@@ -13,10 +13,12 @@ from jicimagelib.geometry import Point2D
 from jicimagelib.io import AutoWrite
 AutoWrite.on = False
 
-from util import unpack_data
+from util import (
+    unpack_data,
+    line_profile,
+    stomata_lookup,
+)
 from find_stomata import find_stomata, ellipse_box
-from find_inner_region import line_profile
-from util import stomata_lookup
 
 COLOR = 'b'
 

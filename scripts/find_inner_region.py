@@ -16,7 +16,12 @@ from jicimagelib.transform import transformation
 
 from jicimagelib.region import Region
 
-from util import unpack_data, minor_and_major_lines_from_box
+from util import (
+    unpack_data,
+    minor_and_major_lines_from_box,
+    line_profile,
+)
+
 from find_stomata import (
     find_stomata,
     ellipse_box,
@@ -45,23 +50,6 @@ def save_major_and_minor_lines(annotated_array, box, name):
     cv2.line(annotated_array, p1.astype("int").astuple(), p2.astype("int").astuple(), (0, 255, 0), 1)
     cv2.line(annotated_array, p3.astype("int").astuple(), p4.astype("int").astuple(), (255, 0, 0), 1)
     scipy.misc.imsave(name, annotated_array)
-
-def line_profile(image, box, linewidth=1):
-    """Return minor and major line profiles of a stomata."""
-    p1, p2, p3, p4 = minor_and_major_lines_from_box(box)
-
-    # Convert to cv2 points to scikit image points.
-    ski_p1 = p1[1], p1[0]
-    ski_p2 = p2[1], p2[0]
-    ski_p3 = p3[1], p3[0]
-    ski_p4 = p4[1], p4[0]
-    
-    minor_profile = skimage.measure.profile_line(image, ski_p1, ski_p2,
-        linewidth=linewidth)
-    major_profile = skimage.measure.profile_line(image, ski_p3, ski_p4,
-        linewidth=linewidth)
-
-    return minor_profile, major_profile
     
 def find_relative_profile_length(profile):
     """Return relative cut points from a line profile."""

@@ -9,9 +9,8 @@ import seaborn as sns
 
 from jicimagelib.io import AutoWrite
 
-from util import unpack_data
+from util import unpack_data, line_profile
 from find_stomata import find_stomata, ellipse_box
-from find_inner_region import line_profile
 from calculate_opening import local_maxima, local_minima
 
 AutoWrite.on = False
