@@ -3,8 +3,6 @@
 import argparse
 import math
 
-from nose.tools import assert_almost_equal
-
 import numpy as np
 import cv2
 import scipy
@@ -65,28 +63,6 @@ def line_profile(image, box, linewidth=1):
 
     return minor_profile, major_profile
     
-def old_find_relative_profile_length(profile):
-    """Return relative cut points from a line profile."""
-
-    # Find relative cut points in the profile.
-    otsu_cutoff = skimage.filters.threshold_otsu(profile)
-    thresholded_profile = profile > otsu_cutoff
-    relative_cut_points = []
-    current = True
-    for i, high_intensity in enumerate(thresholded_profile):
-        if current == high_intensity:
-            continue
-        relative_cut_points.append(i/float(len(profile)))
-        current = not current
-    assert len(relative_cut_points) == 2, \
-         "Expected 2 relative cut points, not: {}".format(len(relative_cut_points))
-
-    # Make the cuts symmetric by averaging.
-    rel1 = 1.0 - relative_cut_points[0]
-    rel2 = relative_cut_points[1]
-    relative_length = (rel1 + rel2) / 2.0
-    return relative_length
-
 def find_relative_profile_length(profile):
     """Return relative cut points from a line profile."""
     new_profile = profile.copy()
