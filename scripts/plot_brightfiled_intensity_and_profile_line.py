@@ -15,7 +15,7 @@ from jicimagelib.geometry import Point2D
 from util import (
     unpack_data,
     minor_and_major_lines_from_box,
-    line_profile,
+    ellipse_line_profiles,
 )
 
 from find_stomata import find_stomata, ellipse_box
@@ -81,7 +81,7 @@ if __name__ == "__main__":
 
     # Determine the length of the intensity profile.
     im = image_collection.image()
-    minor_profile, major_profile = line_profile(im, box)
+    minor_profile, major_profile = ellipse_line_profiles(im, box)
     profile_xs = range(len(minor_profile))
 
 
@@ -100,7 +100,7 @@ if __name__ == "__main__":
             im = proxy_im.image
             im_total = im_total + im
 
-            minor_profile, major_profile = line_profile(im, box, 10)
+            minor_profile, major_profile = ellipse_line_profiles(im, box, 10)
             profile_total = profile_total + minor_profile
 
             plot_brightfield_and_profile_line(im, minor_profile, minor_xs,

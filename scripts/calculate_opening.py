@@ -15,7 +15,7 @@ AutoWrite.on = False
 
 from util import (
     unpack_data,
-    line_profile,
+    ellipse_line_profiles,
     stomata_lookup,
 )
 from find_stomata import find_stomata, ellipse_box
@@ -31,7 +31,7 @@ def ellipse_of_interest(image_collection, series, region):
 def line_profile_x_values(image_collection, box):
     """Return list of x values for line profile plots."""
     im = image_collection.image()
-    minor_profile, major_profile = line_profile(im, box)
+    minor_profile, major_profile = ellipse_line_profiles(im, box)
     return range(len(minor_profile))
 
 def line_profile_mid_point(image_collection, box, plot=False):
@@ -48,7 +48,7 @@ def projected_average_line_profile(image_collection, series, box, plot=False):
     num_z_slices = 0
     for proxy_im in image_collection.zstack_proxy_iterator(s=series, c=2):
         im = proxy_im.image
-        minor_profile, major_profile = line_profile(im, box, 10)
+        minor_profile, major_profile = ellipse_line_profiles(im, box, 10)
         if total is None:
             total = np.zeros(minor_profile.shape, dtype=float)
         total = total + minor_profile

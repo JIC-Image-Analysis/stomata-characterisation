@@ -9,7 +9,7 @@ import seaborn as sns
 
 from jicimagelib.io import AutoWrite
 
-from util import unpack_data, line_profile
+from util import unpack_data, ellipse_line_profiles
 from find_stomata import find_stomata, ellipse_box
 from calculate_opening import local_maxima, local_minima
 
@@ -38,7 +38,7 @@ if __name__ == "__main__":
 
     # Find the x ticks for the line profile
     im = image_collection.image()
-    minor_profile, major_profile = line_profile(im, box)
+    minor_profile, major_profile = ellipse_line_profiles(im, box)
     xs = range(len(minor_profile))
     pmx = len(xs) / 2.0  # Profile midpoint.
 
@@ -48,7 +48,7 @@ if __name__ == "__main__":
         for proxy_im in image_collection.zstack_proxy_iterator(s=s, c=2):
             tot_z = tot_z + 1
             im = proxy_im.image
-            minor_profile, major_profile = line_profile(im, box, 10)
+            minor_profile, major_profile = ellipse_line_profiles(im, box, 10)
     #       plt.plot(xs, minor_profile)
             total = total + minor_profile
         average = total / tot_z

@@ -19,7 +19,7 @@ from jicimagelib.region import Region
 from util import (
     unpack_data,
     minor_and_major_lines_from_box,
-    line_profile,
+    ellipse_line_profiles,
 )
 
 from find_stomata import (
@@ -96,7 +96,7 @@ def find_inner_region_using_lines(raw_zstack, stomata_region, out_fn):
     width, height = bounds
 
 #   save_major_and_minor_lines(annotated_array, box, 'quadrant_lines_image.png')
-    minor_profile, major_profile = line_profile(projection, box)
+    minor_profile, major_profile = ellipse_line_profiles(projection, box)
     minor_rel_length = find_relative_profile_length(minor_profile)
     major_rel_length = find_relative_profile_length(major_profile)
 

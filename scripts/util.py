@@ -82,7 +82,7 @@ def minor_and_major_lines_from_box(box):
 
     return p1, p2, p3, p4
 
-def line_profile(image, box, linewidth=1):
+def ellipse_line_profiles(image, box, linewidth=1):
     """Return minor and major line profiles of an ellipse box."""
     p1, p2, p3, p4 = minor_and_major_lines_from_box(box)
 
