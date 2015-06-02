@@ -14,7 +14,7 @@ from jicimagelib.geometry import Point2D
 
 from util import unpack_data
 from find_stomata import find_stomata, ellipse_box
-from find_inner_region import line_profile, quadrant_lines_from_box
+from find_inner_region import line_profile, minor_and_major_lines_from_box
 
 AutoWrite.on = False
 
@@ -72,7 +72,7 @@ if __name__ == "__main__":
     box = ellipse_box(stomata_region)
 
     # Work out the start and end of the profile line.
-    p1, p2, p3, p4 = quadrant_lines_from_box(box)
+    p1, p2, p3, p4 = minor_and_major_lines_from_box(box)
     minor_xs, minor_ys = zip(p1, p2)
 
     # Determine the length of the intensity profile.

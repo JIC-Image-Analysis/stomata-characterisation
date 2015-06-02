@@ -12,7 +12,7 @@ from jicimagelib.io import AutoWrite
 AutoWrite.on = False
 
 from util import unpack_data
-from find_inner_region import quadrant_lines_from_box
+from find_inner_region import minor_and_major_lines_from_box
 from calculate_opening import STOMATA, ellipse_of_interest, opening_points
 
 def series_identifier(stomata_id, timepoint):
@@ -33,7 +33,7 @@ def box_of_interest(image_collection, stomata_id):
 
 def minor_line(box):
     """Return the two points representing the minor line from the ellipse box."""
-    p1, p2, p3, p4 = quadrant_lines_from_box(box)
+    p1, p2, p3, p4 = minor_and_major_lines_from_box(box)
     return p1, p2
 
 def opening_line(image_collection, series_id, box):

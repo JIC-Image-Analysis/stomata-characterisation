@@ -46,7 +46,7 @@ def line(center, angle, length):
     p2 = center + (direction * half_length)
     return p1, p2
 
-def quadrant_lines_from_box(box):
+def minor_and_major_lines_from_box(box):
     """Return the lines that cut the box into four quadrants."""
 
     center, bounds, angle = box
@@ -66,7 +66,7 @@ def annotated_region_image(region):
 
 def save_major_and_minor_lines(annotated_array, box, name):
     """Save image with minor and major lines."""
-    p1, p2, p3, p4 = quadrant_lines_from_box(box)
+    p1, p2, p3, p4 = minor_and_major_lines_from_box(box)
 
     cv2.ellipse(annotated_array, box, (0, 0, 255))
     cv2.line(annotated_array, p1.astype("int").astuple(), p2.astype("int").astuple(), (0, 255, 0), 1)
@@ -75,7 +75,7 @@ def save_major_and_minor_lines(annotated_array, box, name):
 
 def line_profile(image, box, linewidth=1):
     """Return minor and major line profiles of a stomata."""
-    p1, p2, p3, p4 = quadrant_lines_from_box(box)
+    p1, p2, p3, p4 = minor_and_major_lines_from_box(box)
 
     # Convert to cv2 points to scikit image points.
     ski_p1 = p1[1], p1[0]
