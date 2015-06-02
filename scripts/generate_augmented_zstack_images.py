@@ -18,6 +18,7 @@ from util import (
     stomata_lookup,
     series_identifier,
     minor_and_major_lines_from_box,
+    box_of_interest,
 )
 from calculate_opening import ellipse_of_interest, opening_points
 
