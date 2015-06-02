@@ -70,13 +70,6 @@ def angle2vector(angle):
     radians = (math.pi / 180.0) * angle
     return Point2D( math.cos(radians), math.sin(radians) )
 
-def box_of_interest(image_collection, stomata_id):
-    """Return the stomata box of interest."""
-    region, series_identifiers = stomata_lookup(stomata_id)
-    first = series_identifiers[0]
-    box = ellipse_of_interest(image_collection, first, region)
-    return box
-
 def line(center, angle, length):
     """Return the two points representing the line."""
     center = Point2D(center)
