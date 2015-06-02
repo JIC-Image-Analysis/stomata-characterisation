@@ -152,8 +152,12 @@ def parameterise_single_stomata(stomata_region):
     stomata in that region."""
 
     if AutoWrite.on:
-        scipy.misc.imsave(os.path.join(AutoName.directory, 'stomata_border.png'),
-            stomata_region.border.bitmap)
+        if AutoName.directory:
+            scipy.misc.imsave(os.path.join(AutoName.directory, 'stomata_border.png'),
+                stomata_region.border.bitmap)
+        else:
+            scipy.misc.imsave(os.path.join('stomata_border.png'),
+                stomata_region.border.bitmap)
 
     box = ellipse_box(stomata_region)
 
@@ -163,8 +167,12 @@ def parameterise_single_stomata(stomata_region):
     cv2.ellipse(annotated_array, box, (0, 255, 0))
 
     if AutoWrite.on:
-        scipy.misc.imsave(os.path.join(AutoName.directory, 'annotated_image.png'),
-            annotated_array)
+        if AutoName.directory:
+            scipy.misc.imsave(os.path.join(AutoName.directory, 'annotated_image.png'),
+                annotated_array)
+        else:
+            scipy.misc.imsave(os.path.join('stomata_border.png'),
+                stomata_region.border.bitmap)
 
 def smoothed_max_intensity_projection(raw_z_stack):
     """Return the smoothed max intensity projection."""
@@ -180,8 +188,12 @@ def save_masked_stomata(raw_z_stack, stomata_region):
     dilated_stomata = stomata_region.dilate(iterations=10)
     stomata_image = apply_mask(projection, dilated_stomata)
     if AutoWrite.on:
-        scipy.misc.imsave(os.path.join(AutoName.directory, 'stomata.png'),
-            stomata_image)
+        if AutoName.directory:
+            scipy.misc.imsave(os.path.join(AutoName.directory, 'stomata.png'),
+                stomata_image)
+        else:
+            scipy.misc.imsave(os.path.join('stomata_border.png'),
+                stomata_region.border.bitmap)
 
 
 def find_stomata(raw_z_stack, region_id):
@@ -204,7 +216,7 @@ def main():
     parser.add_argument('confocal_file', help='File containing confocal data')
     parser.add_argument('series', type=int, help='Zero based series index')
     parser.add_argument('region', type=int, help='Zero based region index')
-    parser.add_argument('--output_dir', '-o', default='.', help="Output directory")
+    parser.add_argument('--output_dir', '-o', default='None', help="Output directory")
 
     args = parser.parse_args()
 
