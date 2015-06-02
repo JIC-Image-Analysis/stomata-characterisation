@@ -33,6 +33,14 @@ def stomata_lookup(stomata_id):
         raise(NotImplementedError("Have not found this stomata yet"))
     return d["region"], d["series"]
 
+def series_identifier(stomata_id, timepoint):
+    """Return the series identifier."""
+    region, series_identifiers = stomata_lookup(stomata_id)
+    for i, series in enumerate(series_identifiers):
+        if timepoint == i:
+            return series
+    raise(IndexError("No such timepoint: {}".format(timepoint)))
+
 
 def safe_mkdir(dir_path):
 

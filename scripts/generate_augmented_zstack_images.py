@@ -16,17 +16,10 @@ AutoWrite.on = False
 from util import (
     unpack_data,
     stomata_lookup,
+    series_identifier,
     minor_and_major_lines_from_box,
 )
 from calculate_opening import ellipse_of_interest, opening_points
-
-def series_identifier(stomata_id, timepoint):
-    """Return the series identifier."""
-    region, series_identifiers = stomata_lookup(stomata_id)
-    for i, series in enumerate(series_identifiers):
-        if timepoint == i:
-            return series
-    raise(IndexError("No such timepoint: {}".format(timepoint)))
 
 def box_of_interest(image_collection, stomata_id):
     """Return the stomata box of interest."""
