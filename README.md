@@ -42,3 +42,14 @@ python scripts/generate_augmented_zstack_images.py data/raw/2014-03-20-Lti6b-GFP
 The images can be view using a viewer such as ``eye/viewer``:
 
 https://github.com/mrmh2/eye/blob/master/lib/viewer.py
+
+
+## Testing
+
+To test that things are working as expected. Put the
+``2014-03-20-Lti6b-GFP-ABA-time-series.lif`` file in the ``data/raw``
+directory. Then run the tests using ``nosetests``.
+
+```
+nosetests
+```
