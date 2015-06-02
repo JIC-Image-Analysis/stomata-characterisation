@@ -1,7 +1,12 @@
 import os
 import errno
 
+import math
+
+from nose.tools import assert_almost_equal
+
 from jicimagelib.image import DataManager
+from jicimagelib.geometry import Point2D
 from jicimagelib.io import FileBackend
 
 HERE = os.path.dirname(__file__)
@@ -49,4 +54,59 @@ def unpack_data(confocal_file):
     image_collection = data_manager[0]
 
     return image_collection
+
+def angle2vector(angle):
+    """Return the unit vector representation of the angle as x, y pair."""
+    radians = (math.pi / 180.0) * angle
+    return Point2D( math.cos(radians), math.sin(radians) )
+
+def line(center, angle, length):
+    """Return the two points representing the line."""
+    center = Point2D(center)
+    direction = angle2vector(angle)
+    half_length = length/2
+    p1 = center - (direction * half_length)
+    p2 = center + (direction * half_length)
+    return p1, p2
+
+def minor_and_major_lines_from_box(box):
+    """Return the lines that cut the box into four quadrants."""
+
+    center, bounds, angle = box
+    width, height = bounds
+
+    p1, p2 = line(center, angle, width)
+    p3, p4 = line(center, angle+90, height)
+
+    return p1, p2, p3, p4
+
+
+#############################################################################
+# Tests
+#############################################################################
+
+def test_angle2vector_0_degrees():
+    x, y = angle2vector(0)
+    assert x == 1.0, "{} != 1.0".format(x)
+    assert y == 0.0, "{} != 0.0".format(y)
+
+def test_angle2vector_90_degrees():
+    x, y = angle2vector(90)
+    assert_almost_equal(x, 0.0)
+    assert_almost_equal(y, 1.0)
+
+def test_angle2vector_180_degrees():
+    x, y = angle2vector(180)
+    assert_almost_equal(x, -1.0)
+    assert_almost_equal(y, 0.0)
+
+def test_angle2vector_270_degrees():
+    x, y = angle2vector(270)
+    assert_almost_equal(x, 0.0)
+    assert_almost_equal(y, -1.0)
+
+def test_angle2vector_360_degrees():
+    x, y = angle2vector(360)
+    assert_almost_equal(x, 1.0)
+    assert_almost_equal(y, 0.0)
 

@@ -11,8 +11,7 @@ from jicimagelib.geometry import Point2D
 from jicimagelib.io import AutoWrite
 AutoWrite.on = False
 
-from util import unpack_data
-from find_inner_region import minor_and_major_lines_from_box
+from util import unpack_data, minor_and_major_lines_from_box
 from calculate_opening import STOMATA, ellipse_of_interest, opening_points
 
 def series_identifier(stomata_id, timepoint):

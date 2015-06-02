@@ -12,9 +12,9 @@ import matplotlib.pyplot as plt
 from jicimagelib.io import AutoWrite
 from jicimagelib.geometry import Point2D
 
-from util import unpack_data
+from util import unpack_data, minor_and_major_lines_from_box
 from find_stomata import find_stomata, ellipse_box
-from find_inner_region import line_profile, minor_and_major_lines_from_box
+from find_inner_region import line_profile
 
 AutoWrite.on = False
 
