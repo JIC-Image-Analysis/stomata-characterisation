@@ -50,7 +50,7 @@ def opening_line(image_collection, series_id, box):
     inner_pt2 = minor_pt1 + line * (cut2.x / line.magnitude)
     return inner_pt1, inner_pt2
 
-def find_opening(image_collection, stomata_id, timepoint, output_dir):
+def generate_augmented_zstack_images(image_collection, stomata_id, timepoint, output_dir):
     """Find the stomata opening write out image."""
     series_id = series_identifier(stomata_id, timepoint)
     box = box_of_interest(image_collection, stomata_id)
@@ -91,5 +91,5 @@ if __name__ == "__main__":
         os.mkdir(args.output_dir)
 
     image_collection = unpack_data(args.confocal_file)
-    find_opening(image_collection, args.stomata_id, args.timepoint,
-    args.output_dir)
+    generate_augmented_zstack_images(image_collection, args.stomata_id,
+        args.timepoint, args.output_dir)
