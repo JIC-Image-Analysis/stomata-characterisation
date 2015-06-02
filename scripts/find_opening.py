@@ -11,13 +11,16 @@ from jicimagelib.geometry import Point2D
 from jicimagelib.io import AutoWrite
 AutoWrite.on = False
 
-from util import unpack_data, minor_and_major_lines_from_box
-from calculate_opening import STOMATA, ellipse_of_interest, opening_points
+from util import (
+    unpack_data,
+    stomata_lookup,
+    minor_and_major_lines_from_box,
+)
+from calculate_opening import ellipse_of_interest, opening_points
 
 def series_identifier(stomata_id, timepoint):
     """Return the series identifier."""
-    region = STOMATA[stomata_id]["region"]
-    series_identifiers = STOMATA[stomata_id]["series"]
+    region, series_identifiers = stomata_lookup(stomata_id)
     for i, series in enumerate(series_identifiers):
         if timepoint == i:
             return series
@@ -25,8 +28,8 @@ def series_identifier(stomata_id, timepoint):
 
 def box_of_interest(image_collection, stomata_id):
     """Return the stomata box of interest."""
-    first = STOMATA[stomata_id]["series"][0]
-    region = STOMATA[stomata_id]["region"]
+    region, series_identifiers = stomata_lookup(stomata_id)
+    first = series_identifiers[0]
     box = ellipse_of_interest(image_collection, first, region)
     return box
 
