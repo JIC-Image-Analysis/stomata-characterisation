@@ -1,6 +1,8 @@
 """Find the stomata opening for a time point and plot annotated z-slices."""
 
 import sys
+import os
+import os.path
 import argparse
 
 import numpy as np
@@ -48,7 +50,7 @@ def opening_line(image_collection, series_id, box):
     inner_pt2 = minor_pt1 + line * (cut2.x / line.magnitude)
     return inner_pt1, inner_pt2
 
-def find_opening(image_collection, stomata_id, timepoint):
+def find_opening(image_collection, stomata_id, timepoint, output_dir):
     """Find the stomata opening write out image."""
     series_id = series_identifier(stomata_id, timepoint)
     box = box_of_interest(image_collection, stomata_id)
@@ -61,6 +63,7 @@ def find_opening(image_collection, stomata_id, timepoint):
     z_iter = image_collection.zstack_proxy_iterator(s=series_id, c=2)
     for z, proxy_im in enumerate(z_iter):
         fname = 'S{}_T{}_Z{}.png'.format(series_id, timepoint, z)
+        fpath = os.path.join(output_dir, fname)
         im = np.dstack((proxy_im.image, proxy_im.image, proxy_im.image))
         cv2.ellipse(im, box, (0, 0, 255))
         cv2.line(im,
@@ -70,7 +73,7 @@ def find_opening(image_collection, stomata_id, timepoint):
         cv2.line(im,
             inner_pt1.astype("int").astuple(),
             inner_pt2.astype("int").astuple(), (255, 0, 0), 1)
-        scipy.misc.imsave(fname, im)
+        scipy.misc.imsave(fpath, im)
 
 
 if __name__ == "__main__":
@@ -79,10 +82,14 @@ if __name__ == "__main__":
     parser.add_argument('stomata_id', type=int, help='Zero based stomata index')
     parser.add_argument('timepoint', type=int, default=None,
         help='Zero based time point index')
+    parser.add_argument('-d', '--output_dir', default='.',
+        help='Output directory')
 
     args = parser.parse_args()
 
-    image_collection = unpack_data(args.confocal_file)
-    find_opening(image_collection, args.stomata_id, args.timepoint)
-    
+    if not os.path.isdir(args.output_dir):
+        os.mkdir(args.output_dir)
 
+    image_collection = unpack_data(args.confocal_file)
+    find_opening(image_collection, args.stomata_id, args.timepoint,
+    args.output_dir)
