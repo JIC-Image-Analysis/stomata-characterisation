@@ -50,5 +50,44 @@ class FunctionalTests(unittest.TestCase):
         distance = calculate_opening(image_collection, 0, series_ids[0])
         self.assertEqual(round(distance, 2), 1.24)
         
+    def test_generate_augmented_zstack_images(self):
+        from scripts.util import unpack_data
+        image_collection = unpack_data(INPUT_FILE)
+
+        from scripts.generate_augmented_zstack_images import generate_augmented_zstack_images
+        generate_augmented_zstack_images(image_collection, 0, 0, TMP_DIR)
+
+        for fname in [
+            "S8_T0_Z0.png",
+            "S8_T0_Z10.png",
+            "S8_T0_Z11.png",
+            "S8_T0_Z12.png",
+            "S8_T0_Z13.png",
+            "S8_T0_Z14.png",
+            "S8_T0_Z15.png",
+            "S8_T0_Z16.png",
+            "S8_T0_Z17.png",
+            "S8_T0_Z18.png",
+            "S8_T0_Z19.png",
+            "S8_T0_Z1.png",
+            "S8_T0_Z20.png",
+            "S8_T0_Z21.png",
+            "S8_T0_Z22.png",
+            "S8_T0_Z23.png",
+            "S8_T0_Z24.png",
+            "S8_T0_Z2.png",
+            "S8_T0_Z3.png",
+            "S8_T0_Z4.png",
+            "S8_T0_Z5.png",
+            "S8_T0_Z6.png",
+            "S8_T0_Z7.png",
+            "S8_T0_Z8.png",
+            "S8_T0_Z9.png",
+            ]:
+            fpath = os.path.join(TMP_DIR, fname)
+            self.assertTrue(os.path.isfile(fpath))
+
+
+
 if __name__ == "__main__":
     unittest.main()
