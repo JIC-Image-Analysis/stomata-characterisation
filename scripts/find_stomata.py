@@ -216,7 +216,7 @@ def main():
     parser.add_argument('confocal_file', help='File containing confocal data')
     parser.add_argument('series', type=int, help='Zero based series index')
     parser.add_argument('region', type=int, help='Zero based region index')
-    parser.add_argument('--output_dir', '-o', default='None', help="Output directory")
+    parser.add_argument('--output_dir', '-o', default='.', help="Output directory")
 
     args = parser.parse_args()
 
