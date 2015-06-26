@@ -16,14 +16,14 @@ UNPACK = os.path.join(HERE, '..', 'data', 'unpack')
 
 
 STOMATA = (
-    dict(region=9, series=range(8, 15)),     # Stomata id 1
-    dict(region=14, series=range(8, 15)),    # Stomata id 2
-    dict(region=20, series=range(8, 15)),    # Stomata id 3
-    dict(region=8, series=range(15, 24)),    # Stomata id 4
-    dict(region=17, series=range(15, 24)),   # Stomata id 5
-    dict(region=21, series=range(15, 24)),   # Stomata id 6
-    None,                                    # Unable to identify stomata 7
-    dict(region=8, series=range(24, 36)),    # Stomata id 8
+    dict(region=9, center=(119, 141), series=range(8, 15)),     # Stomata id 1
+    dict(region=14, center=(420, 257), series=range(8, 15)),    # Stomata id 2
+    dict(region=20, center=(219, 426), series=range(8, 15)),    # Stomata id 3
+    dict(region=8, center=(329, 127), series=range(15, 24)),    # Stomata id 4
+    dict(region=17, center=(396, 325), series=range(15, 24)),   # Stomata id 5
+    dict(region=21, center=(89, 376), series=range(15, 24)),   # Stomata id 6
+    dict(region=None, center=(153, 120), series=range(24, 36)),   # Stomata id 7
+    dict(region=8, center=(305, 349), series=range(24, 36)),    # Stomata id 8
 )
 
 def stomata_lookup(stomata_id):
