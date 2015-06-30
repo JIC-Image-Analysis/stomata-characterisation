@@ -22,10 +22,17 @@ from jicimagelib.transform import (
     remove_small_objects,
 )
 
-from util import unpack_data, STOMATA
+from util import (
+    unpack_data,
+    stomata_timeseries_lookup,
+    STOMATA,
+)
 
-from find_stomata import (
+from util.transform import (
     find_connected_components,
+) 
+
+from util.geometry import (
     ellipse_box,
 )
 
@@ -74,8 +81,8 @@ def grow(convex_hull_im, small_removed_im):
 
     return trimmed
 
-def find_stomata_ellipse_box(raw_zstack, x, y):
-    """Return stomata ellipse box."""
+def find_stomate_ellipse_box(raw_zstack, x, y):
+    """Return stomate ellipse box."""
     projected = max_intensity_projection(raw_zstack)
     equalised = equalize_adaptive_clahe(projected)
     smoothed = smooth_gaussian(equalised)
@@ -120,7 +127,7 @@ def main():
     image_collection = unpack_data(args.confocal_file)
     raw_zstack = image_collection.zstack_array(s=args.series, c=0)
 
-    box = find_stomata_ellipse_box(raw_zstack, args.x, args.y) 
+    box = find_stomate_ellipse_box(raw_zstack, args.x, args.y) 
 
 
     projected = max_intensity_projection(raw_zstack)
@@ -139,16 +146,17 @@ def test_all():
 
     image_collection = unpack_data(args.confocal_file)
 
-    for i, stomate in enumerate(STOMATA):
-        for s in stomate["series"]:
-            x, y = stomate["center"]
-            fname = 'annotated_projection_stomate_{}_series_{}.png'.format(i, s)
+    for i in range(len(STOMATA)):
+        stomata_timeseries = stomata_timeseries_lookup(i)
+        for stomate in stomata_timeseries:
+            fname = 'annotated_projection_stomate_{}_series_{}.png'.format(
+                stomate.stomate_id, stomate.timepoint_id)
             fpath = os.path.join(AutoName.directory, fname)
-            raw_zstack = image_collection.zstack_array(s=s, c=0)
+            raw_zstack = image_collection.zstack_array(s=stomate.series, c=0)
             projected = max_intensity_projection(raw_zstack)
             gray_uint8 = normalise(projected) * 255
             annotation_array = np.dstack([gray_uint8, gray_uint8, gray_uint8])
-            box = find_stomata_ellipse_box(raw_zstack, x, y) 
+            box = find_stomate_ellipse_box(raw_zstack, stomate.x, stomate.y) 
             cv2.ellipse(annotation_array, box, (255, 0, 0))
             scipy.misc.imsave(fpath, annotation_array)
 
