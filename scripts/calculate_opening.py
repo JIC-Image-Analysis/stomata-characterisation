@@ -235,29 +235,5 @@ def main():
     calculate_opening(image_collection, args.stomate_id, args.timepoint)
     plt.show()
 
-def test_all():
-    parser = argparse.ArgumentParser(__doc__)
-    parser.add_argument("confocal_file", help="File containing confocal data")
-    parser.add_argument("output_dir", help="Output directory")
-
-    args = parser.parse_args()
-    if not os.path.isdir(args.output_dir):
-        os.mkdir(args.output_dir)
-    AutoName.directory = args.output_dir
-    AutoWrite.on = False
-
-    image_collection = unpack_data(args.confocal_file)
-
-    for i in range(len(STOMATA)):
-        stomata_timeseries = stomata_timeseries_lookup(i)
-        for timepoint, s in enumerate(stomata_timeseries.series):
-            stomate_opening = StomateOpening(image_collection, i, timepoint)
-            stomate_opening.plot()
-            fname = "opening_stomate_{}_timepoint_{}.png".format(
-                i+1, timepoint)
-            fpath = os.path.join(AutoName.directory, fname)
-            plt.savefig(fpath)
-            plt.close()
-
 if __name__ == "__main__":
     main()
