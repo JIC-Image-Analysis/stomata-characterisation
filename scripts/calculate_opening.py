@@ -253,7 +253,7 @@ def test_all():
         for timepoint, s in enumerate(stomata_timeseries.series):
             stomate_opening = StomateOpening(image_collection, i, timepoint)
             stomate_opening.plot()
-            fname = "opening_stomate_{}_series_{}.png".format(
+            fname = "opening_stomate_{}_timepoint_{}.png".format(
                 i+1, timepoint)
             fpath = os.path.join(AutoName.directory, fname)
             plt.savefig(fpath)

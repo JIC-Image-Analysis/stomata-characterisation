@@ -47,7 +47,7 @@ def main():
 
                 # Save figure.
                 stomate_opening.plot()
-                fname = "opening_stomate_{}_series_{}.png".format(
+                fname = "opening_stomate_{}_timepoint_{}.png".format(
                     i+1, timepoint)
                 fpath = os.path.join(AutoName.directory, fname)
                 plt.savefig(fpath)
