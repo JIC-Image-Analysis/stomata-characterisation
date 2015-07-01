@@ -95,6 +95,10 @@ def peak_half_height(average, left_pt, right_pt, plot=False):
             color=COLOR)
     return half_height_pt
 
+def rmsd(ar1, ar2):
+    """Return the root mean square deviation between two arrays."""
+    return np.sqrt( np.sum( (ar1 - ar2)**2 )  / ar1.size )
+
 # Tests...
 
 def test_helf_height():
@@ -150,3 +154,14 @@ def test_optimised_point():
     assert round(p3.x, 2) == 7.0
     assert round(p3.y, 2) == 5.0
     
+def test_rmsd():
+    ar0 = np.zeros((5,))
+    assert rmsd(ar0, ar0) == 0.
+    ar1 = np.ones((5,))
+    assert rmsd(ar1, ar1) == 0.
+    assert rmsd(ar0, ar1) == 1., rmsd(ar0, ar1)
+    assert rmsd(ar1, ar0) == 1.
+    ar2 = np.ones((5,)) * 2
+    assert rmsd(ar2, ar0) == 2., rmsd(ar2, ar0)
+    assert rmsd(ar0, ar2) == 2., rmsd(ar0, ar2)
+
