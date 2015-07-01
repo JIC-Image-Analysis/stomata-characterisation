@@ -17,8 +17,9 @@ from util.array import (
 class LineProfile(object):
     """Class for working with line profiles."""
 
-    def __init__(self, ys):
+    def __init__(self, ys, identifier=None):
         self.ys = ys
+        self.identifier = identifier
 
     @property
     def xs(self):

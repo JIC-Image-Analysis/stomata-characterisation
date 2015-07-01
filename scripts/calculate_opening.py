@@ -1,11 +1,14 @@
 """Calculate the opening of a stomate."""
 
+import sys
 import os
 import os.path
 import argparse
 import math
 
 import numpy as np
+
+import scipy.ndimage
 
 import matplotlib.pyplot as plt
 from matplotlib.patches import Ellipse
@@ -31,7 +34,7 @@ from util.line_profile import (
 )
 
 from util.geometry import line
-from util.array import peak_half_height
+from util.array import peak_half_height, rmsd
 
 from stomata_finder import find_stomate_ellipse_box
 
@@ -43,10 +46,14 @@ class StomateOpening(object):
         self.image_collection = image_collection
         self.stomata_timeseries = stomata_timeseries_lookup(stomate_id)
         self.stomate = self.stomata_timeseries.stomate_at_timepoint(timepoint)
+        
+        self.removed_raw_line_profiles = []
+        self.removed_line_profiles = []
 
         self.ellipse_box_init()
         self.minor_axis_pts_init()
         self.line_profiles_init()
+        self.best_line_profile_init()
         self.minima_maximum_init()
         self.opening_pts_init()
         self.opening_distance_init()
@@ -67,21 +74,70 @@ class StomateOpening(object):
     def line_profiles_init(self):
         """Initialise the stomata minor axis line profiles."""
         self.line_profiles = LineProfileCollection()
+        self.ignored_line_profiles = LineProfileCollection()
+        self.raw_line_profiles = LineProfileCollection()
 
-        ziter = self.image_collection.zstack_proxy_iterator(
-            self.stomate.series, c=2)
+        zstack = [z for z in self.image_collection.zstack_proxy_iterator(
+            self.stomate.series, c=2)]
 
-        for zslice in ziter:
+        fraction_to_exclude = 0.2
+        exclude_int = int(round(len(zstack) * fraction_to_exclude / 2.))
+        to_include = range(exclude_int, len(zstack)-exclude_int)
+        print "exclude_int", exclude_int
+        print "total range", range(len(zstack))
+        print "include range", to_include
+
+        for i, zslice in enumerate(zstack):
             # Convert from cv2 points to scikit image points.
             ski_p1 = self.minor_axis_p1[1], self.minor_axis_p1[0]
             ski_p2 = self.minor_axis_p2[1], self.minor_axis_p2[0]
 
-            line_profile = LineProfile(skimage.measure.profile_line(
-                zslice.image, ski_p1, ski_p2, linewidth=10))
+            profile = skimage.measure.profile_line( zslice.image, ski_p1,
+                ski_p2, linewidth=10)
+            profile = normalise(profile)
+            line_profile = LineProfile(profile, i)
 
-            self.line_profiles.add_line_profile(line_profile)
+            if i in to_include:
+                # Save the raw, albeit normalised, profile.
+                self.raw_line_profiles.add_line_profile(line_profile)
 
+                # Save the Gaussian filtered profile.
+                profile = scipy.ndimage.filters.gaussian_filter(profile, 2.0)
+                line_profile = LineProfile(profile, i)
+                self.line_profiles.add_line_profile(line_profile)
+            else:
+                # Log the ignored line profile.
+                self.ignored_line_profiles.add_line_profile(line_profile)
+
+
+        self.average_line_profile_init()
+        self.minima_maximum_init()
+
+    def average_line_profile_init(self):
+        """Calculate the average line profile."""
         self.average_line_profile = self.line_profiles.average()
+
+    def best_line_profile_init(self):
+        """Iteratively remove the worst fitting line profiles."""
+        while len(self.line_profiles) > 10:
+            worst_line_profile = None
+            worst_rmsd = -1000
+            worst_index = None
+            start = self.left_minima.x
+            end = self.right_minima.x
+            for i, line_profile in enumerate(self.line_profiles):
+                r = rmsd(line_profile.ys[start:end],
+                    self.average_line_profile.ys[start:end])
+                if r > worst_rmsd:
+                    worst_rmsd = r
+                    worst_line_profile = line_profile
+                    worst_index = i
+            self.removed_line_profiles.append(
+                self.line_profiles.pop(worst_index))
+            self.removed_raw_line_profiles.append(
+                self.raw_line_profiles.pop(worst_index))
+            self.average_line_profile_init()
+            self.minima_maximum_init()
 
     def minima_maximum_init(self):
         """Initialise the minima surrounding the opening."""
@@ -191,10 +247,16 @@ class StomateOpening(object):
         plt.subplot(133)
 
         # Plot the individual line profiles and the average line profile line.
+        for line_profile in self.ignored_line_profiles:
+            plt.plot(line_profile.xs, line_profile.ys, color="0.7", lw=3)
+        for line_profile in self.removed_line_profiles:
+            plt.plot(line_profile.xs, line_profile.ys, color="0.5")
+        for line_profile in self.raw_line_profiles:
+            plt.plot(line_profile.xs, line_profile.ys, color="peru")
         for line_profile in self.line_profiles:
-            plt.plot(line_profile.xs, line_profile.ys, color="0.3")
+            plt.plot(line_profile.xs, line_profile.ys, color="orange")
         plt.plot(self.average_line_profile.xs, self.average_line_profile.ys,
-            lw=2)
+            lw=3, linestyle="--")
 
         # Plot the midpoint line.
         plt.axvline(x=self.average_line_profile.mid_point, linestyle="--",
