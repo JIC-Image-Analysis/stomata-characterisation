@@ -3,6 +3,7 @@
 import os
 import os.path
 import argparse
+import math
 
 import numpy as np
 
@@ -48,6 +49,7 @@ class StomateOpening(object):
         self.line_profiles_init()
         self.minima_maximum_init()
         self.opening_pts_init()
+        self.opening_distance_init()
 
     def ellipse_box_init(self):
         """Initialise the stomate ellipse box."""
@@ -95,6 +97,15 @@ class StomateOpening(object):
         self.right_opening = peak_half_height(
             self.average_line_profile.ys, self.maximum, self.right_minima)
 
+    def opening_distance_init(self):
+        """Initialise the opening distance."""
+        # These points are from the profile line so we only care about the
+        # x-axis.
+        diff = self.left_opening.x - self.right_opening.x
+        d2 = diff * diff
+        d = math.sqrt(d2)
+        self.opening_distance = d * self.stomate.scale_factor
+
     def line_to_image_space(self, line_point):
         """Return point in image space."""
         line = self.minor_axis_p2 - self.minor_axis_p1
@@ -117,6 +128,10 @@ class StomateOpening(object):
         # Add the projected image.
         plt.imshow(projection, cmap=plt.cm.gray)
         ax.autoscale(False)
+
+        # Add the title for the first subplot.
+        plt.title("Stomate {} timepoint {}".format(
+            self.stomate.stomate_id, self.stomate.timepoint_id))
 
         # Plot the ellipse.
         ellipse = Ellipse(self.box[0], self.box[1][0], self.box[1][1],
@@ -180,8 +195,7 @@ class StomateOpening(object):
             marker="o", linestyle="_", color="c")
 
         plt.xlim((0, len(self.average_line_profile.xs)-1))
-
-
+        plt.title("Stomate opening: {:.3f} microns".format(self.opening_distance))
 
 def calculate_opening(image_collection, stomate_id, timepoint):
     """Return the stomate opening in micro meters."""
@@ -223,6 +237,7 @@ def test_all():
                 i+1, timepoint)
             fpath = os.path.join(AutoName.directory, fname)
             plt.savefig(fpath)
+            plt.close()
 
 if __name__ == "__main__":
-    test_all()
+    main()
