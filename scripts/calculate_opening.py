@@ -115,15 +115,17 @@ class StomateOpening(object):
     def plot(self):
         """Create plot to verify that everything is sane."""
         
-        brightfiled_zstack = self.image_collection.zstack_array(
-            s=self.stomate.series, c=2)
-        projection = max_intensity_projection(brightfiled_zstack)
-        projection = (normalise(projection) * 255).astype(np.uint8)
+        # Initialise the figure.
+        fig = plt.figure(figsize=(24,6))
 
-        # Start the first plot.
-        fig = plt.figure(figsize=(16,6))
-        ax = plt.subplot(121)
+        # Start working on the first subplot.
+        ax = plt.subplot(131)
         ax.grid(False)
+
+        flourescent_zstack = self.image_collection.zstack_array(
+            s=self.stomate.series, c=0)
+        projection = max_intensity_projection(flourescent_zstack)
+        projection = (normalise(projection) * 255).astype(np.uint8)
 
         # Add the projected image.
         plt.imshow(projection, cmap=plt.cm.gray)
@@ -132,6 +134,24 @@ class StomateOpening(object):
         # Add the title for the first subplot.
         plt.title("Stomate {} timepoint {}".format(
             self.stomate.stomate_id, self.stomate.timepoint_id))
+
+        # Plot the ellipse.
+        ellipse = Ellipse(self.box[0], self.box[1][0], self.box[1][1],
+            self.box[2], fill=False, lw=1.2, color="y")
+        ax.add_artist(ellipse)
+
+        # Start working on the second subplot.
+        ax = plt.subplot(132)
+        ax.grid(False)
+
+        brightfiled_zstack = self.image_collection.zstack_array(
+            s=self.stomate.series, c=2)
+        projection = max_intensity_projection(brightfiled_zstack)
+        projection = (normalise(projection) * 255).astype(np.uint8)
+
+        # Add the projected image.
+        plt.imshow(projection, cmap=plt.cm.gray)
+        ax.autoscale(False)
 
         # Plot the ellipse.
         ellipse = Ellipse(self.box[0], self.box[1][0], self.box[1][1],
@@ -167,8 +187,8 @@ class StomateOpening(object):
                 color="c")
 
 
-        # Start the second plot.
-        plt.subplot(122)
+        # Start the third plot.
+        plt.subplot(133)
 
         # Plot the individual line profiles and the average line profile line.
         for line_profile in self.line_profiles:
