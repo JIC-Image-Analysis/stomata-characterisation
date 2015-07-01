@@ -54,7 +54,6 @@ class StomateOpening(object):
         self.minor_axis_pts_init()
         self.line_profiles_init()
         self.best_line_profile_init()
-        self.minima_maximum_init()
         self.opening_pts_init()
         self.opening_distance_init()
 
@@ -110,10 +109,10 @@ class StomateOpening(object):
                 self.ignored_line_profiles.add_line_profile(line_profile)
 
 
-        self.average_line_profile_init()
-        self.minima_maximum_init()
+        self.average_line_profile_calc()
+        self.minima_maximum_calc()
 
-    def average_line_profile_init(self):
+    def average_line_profile_calc(self):
         """Calculate the average line profile."""
         self.average_line_profile = self.line_profiles.average()
 
@@ -136,11 +135,11 @@ class StomateOpening(object):
                 self.line_profiles.pop(worst_index))
             self.removed_raw_line_profiles.append(
                 self.raw_line_profiles.pop(worst_index))
-            self.average_line_profile_init()
-            self.minima_maximum_init()
+            self.average_line_profile_calc()
+            self.minima_maximum_calc()
 
-    def minima_maximum_init(self):
-        """Initialise the minima surrounding the opening."""
+    def minima_maximum_calc(self):
+        """Calculate the minima surrounding the opening and the maxium within."""
         self.left_minima, \
         self.right_minima = midpoint_minima(self.average_line_profile)
         self.maximum = midpoint_maximum(self.average_line_profile)
