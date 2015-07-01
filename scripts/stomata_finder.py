@@ -1,4 +1,4 @@
-"""Exploratory code to find stomata."""
+"""Fit ellipse to stomate identified using x,y coordinates."""
 
 import os
 import os.path
@@ -113,7 +113,7 @@ def annotate_with_ellipse_box(image, box):
 def main():
     parser = argparse.ArgumentParser(__doc__)
     parser.add_argument("confocal_file", help="File containing confocal data")
-    parser.add_argument('series', type=int, help='Zero based series index')
+    parser.add_argument('series', type=int, help='Zero based microscopy series index')
     parser.add_argument('x', type=int, help='x coordinate')
     parser.add_argument('y', type=int, help='y coordinate')
     parser.add_argument("output_dir", help="Output directory")
@@ -162,5 +162,5 @@ def test_all():
 
     
 if __name__ == "__main__":
-    test_all()
+    main()
 
