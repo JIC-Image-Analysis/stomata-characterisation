@@ -101,20 +101,6 @@ class StomateOpening(object):
         m = line.magnitude
         return self.minor_axis_p1 + line * (line_point.x / line.magnitude)
 
-    def plot_opening_points(self):
-        """Plot the opening points on the brightfiled image."""
-      # line = self.minor_axis_p2 - self.minor_axis_p1
-      # m = line.magnitude
-      # inner_pt1 = self.minor_axis_p1 + line * (self.left_opening.x / line.magnitude)
-      # inner_pt2 = self.minor_axis_p1 + line * (self.right_opening.x / line.magnitude)
-        inner_pt1 = self.line_to_image_space(self.left_opening)
-        inner_pt2 = self.line_to_image_space(self.right_opening)
-        plt.plot([inner_pt1.x, inner_pt2.x],
-            [inner_pt1.y, inner_pt2.y],
-            marker="+", linestyle="_", color="c")
-
-
-         
     def plot(self):
         """Create plot to verify that everything is sane."""
         
