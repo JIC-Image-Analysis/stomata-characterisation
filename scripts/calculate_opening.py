@@ -47,12 +47,12 @@ class StomateOpening(object):
         self.stomata_timeseries = stomata_timeseries_lookup(stomate_id)
         self.stomate = self.stomata_timeseries.stomate_at_timepoint(timepoint)
         
-        self.removed_raw_line_profiles = []
         self.removed_line_profiles = []
 
         self.ellipse_box_init()
         self.minor_axis_pts_init()
         self.line_profiles_init()
+        self.exclude_top_and_bottom_zslices_init()
         self.best_line_profile_init()
         self.opening_pts_init()
         self.opening_distance_init()
@@ -73,15 +73,9 @@ class StomateOpening(object):
     def line_profiles_init(self):
         """Initialise the stomata minor axis line profiles."""
         self.line_profiles = LineProfileCollection()
-        self.ignored_line_profiles = LineProfileCollection()
-        self.raw_line_profiles = LineProfileCollection()
 
         zstack = [z for z in self.image_collection.zstack_proxy_iterator(
             self.stomate.series, c=2)]
-
-        fraction_to_exclude = 0.2
-        exclude_int = int(round(len(zstack) * fraction_to_exclude / 2.))
-        to_include = range(exclude_int, len(zstack)-exclude_int)
 
         for i, zslice in enumerate(zstack):
             # Convert from cv2 points to scikit image points.
@@ -90,20 +84,9 @@ class StomateOpening(object):
 
             profile = skimage.measure.profile_line( zslice.image, ski_p1,
                 ski_p2, linewidth=10)
-            profile = normalise(profile)
             line_profile = LineProfile(profile, i)
 
-            if i in to_include:
-                # Save the raw, albeit normalised, profile.
-                self.raw_line_profiles.add_line_profile(line_profile)
-
-                # Save the Gaussian filtered profile.
-                profile = scipy.ndimage.filters.gaussian_filter(profile, 2.0)
-                line_profile = LineProfile(profile, i)
-                self.line_profiles.add_line_profile(line_profile)
-            else:
-                # Log the ignored line profile.
-                self.ignored_line_profiles.add_line_profile(line_profile)
+            self.line_profiles.add_line_profile(line_profile)
 
 
         self.average_line_profile_calc()
@@ -111,7 +94,25 @@ class StomateOpening(object):
 
     def average_line_profile_calc(self):
         """Calculate the average line profile."""
-        self.average_line_profile = self.line_profiles.average()
+        self.average_line_profile = self.line_profiles.average('smoothed_gaussian')
+
+    def exclude_top_and_bottom_zslices_init(self):
+        """Exclude top and bottom zslices."""
+        self.ignored_line_profiles = LineProfileCollection()
+        fraction_to_exclude = 0.2
+        exclude_int = int(round(len(self.line_profiles) * fraction_to_exclude / 2.))
+        to_include = set(range(exclude_int, len(self.line_profiles)-exclude_int))
+        to_exclude = set(range(len(self.line_profiles))) - to_include
+
+        while len(to_exclude) > 0:
+            for line_profile in self.line_profiles:
+                if line_profile.identifier not in to_include:
+                    self.line_profiles.remove(line_profile)
+                    self.ignored_line_profiles.add_line_profile(line_profile)
+                    to_exclude.remove(line_profile.identifier)
+
+        self.average_line_profile_calc()
+        self.minima_maximum_calc()
 
     def best_line_profile_init(self):
         """Iteratively remove the worst fitting line profiles."""
@@ -130,8 +131,6 @@ class StomateOpening(object):
                     worst_index = i
             self.removed_line_profiles.append(
                 self.line_profiles.pop(worst_index))
-            self.removed_raw_line_profiles.append(
-                self.raw_line_profiles.pop(worst_index))
             self.average_line_profile_calc()
             self.minima_maximum_calc()
 
@@ -269,13 +268,13 @@ class StomateOpening(object):
         """Plot the intensity profile lines."""
         # Plot the individual line profiles and the average line profile line.
         for line_profile in self.ignored_line_profiles:
-            plt.plot(line_profile.xs, line_profile.ys, color="0.7", lw=3)
+            plt.plot(line_profile.xs, line_profile.normalised, color="0.7", lw=3)
         for line_profile in self.removed_line_profiles:
-            plt.plot(line_profile.xs, line_profile.ys, color="0.5")
-        for line_profile in self.raw_line_profiles:
-            plt.plot(line_profile.xs, line_profile.ys, color="peru")
+            plt.plot(line_profile.xs, line_profile.smoothed_gaussian, color="0.5")
         for line_profile in self.line_profiles:
-            plt.plot(line_profile.xs, line_profile.ys, color="orange")
+            plt.plot(line_profile.xs, line_profile.normalised, color="peru")
+        for line_profile in self.line_profiles:
+            plt.plot(line_profile.xs, line_profile.smoothed_gaussian, color="orange")
         plt.plot(self.average_line_profile.xs, self.average_line_profile.ys,
             lw=3, linestyle="--")
 
@@ -336,6 +335,20 @@ class StomateOpening(object):
 def calculate_opening(image_collection, stomate_id, timepoint):
     """Return the stomate opening in micro meters."""
     stomate_opening = StomateOpening(image_collection, stomate_id, timepoint)
+    print "included"
+    for lp in stomate_opening.line_profiles:
+        lp.identifier
+        print lp.identifier,
+    print ""
+    print "ignored"
+    for lp in stomate_opening.ignored_line_profiles:
+        print lp.identifier,
+    print ""
+    print "removed"
+    for lp in stomate_opening.removed_line_profiles:
+        lp.identifier
+        print lp.identifier,
+    print ""
     stomate_opening.plot()
 
 def main():
