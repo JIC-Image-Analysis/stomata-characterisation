@@ -205,52 +205,51 @@ class StomateOpening(object):
 
         return np.concatenate([row0, row1])
 
-
-    def plot(self):
-        """Create plot to verify that everything is sane."""
+    def add_stomate_ellipse_to_plot(self, ax):
+        """Add the stomate ellipse to the plot."""
+        ellipse = Ellipse(self.box[0], self.box[1][0], self.box[1][1],
+            self.box[2], fill=False, lw=1.2, color="y")
+        ax.add_artist(ellipse)
         
-        # Initialise the figure.
-        fig = plt.figure(figsize=(20,12))
-
-        # Start working on the first subplot.
-        ax = plt.subplot(231)
-        ax.grid(False)
-
+    def flourescent_plot(self, ax):
+        """Plot the fluorescent channel."""
         flourescent_zstack = self.image_collection.zstack_array(
             s=self.stomate.series, c=0)
         projection = max_intensity_projection(flourescent_zstack)
         projection = (normalise(projection) * 255).astype(np.uint8)
 
-        # Add the projected image.
         plt.imshow(projection, interpolation="none", cmap=plt.cm.gray)
-        ax.autoscale(False)
 
-        # Add the title for the first subplot.
+        self.add_stomate_ellipse_to_plot(ax)
+
         plt.title("Stomate {} timepoint {}".format(
             self.stomate.stomate_id, self.stomate.timepoint_id))
 
-        # Plot the ellipse.
-        ellipse = Ellipse(self.box[0], self.box[1][0], self.box[1][1],
-            self.box[2], fill=False, lw=1.2, color="y")
-        ax.add_artist(ellipse)
-
-        # Start working on the second subplot.
-        ax = plt.subplot(232)
+        ax.autoscale(False)
         ax.grid(False)
 
+    def add_points_to_plot(self, points, color, marker="+", linestyle="_"):
+        """Add points to plot."""
+        for p in points:
+            # Convert from line profile space to image space.
+            im_point = self.line_to_image_space(p)
+            plt.plot(im_point.x, im_point.y, marker=marker,
+                linestyle=linestyle, color=color)
+
+
+    def brightfield_plot(self, ax):
+        """Plot the bright field channel."""
         brightfiled_zstack = self.image_collection.zstack_array(
             s=self.stomate.series, c=2)
         projection = max_intensity_projection(brightfiled_zstack)
         projection = (normalise(projection) * 255).astype(np.uint8)
 
-        # Add the projected image.
         plt.imshow(projection, interpolation="none", cmap=plt.cm.gray)
+         
         ax.autoscale(False)
+        ax.grid(False)
 
-        # Plot the ellipse.
-        ellipse = Ellipse(self.box[0], self.box[1][0], self.box[1][1],
-            self.box[2], fill=False, lw=1.2, color="y")
-        ax.add_artist(ellipse)
+        self.add_stomate_ellipse_to_plot(ax)
 
         # Plot the minor axis of the ellipse.
         plt.plot(
@@ -259,31 +258,15 @@ class StomateOpening(object):
 
         # Plot the mid point.
         line_pt = Point2D(self.average_line_profile.mid_point, 0)
-        im_pt = self.line_to_image_space(line_pt)
-        plt.plot(im_pt.x, im_pt.y, marker="+", linestyle="_",
-                color="m")
+        self.add_points_to_plot([line_pt], "m")
 
-        # Plot the minima.
-        for line_point in [self.left_minima, self.right_minima]:
-            im_point = self.line_to_image_space(line_point)
-            plt.plot(im_point.x, im_point.y, marker="+", linestyle="_",
-                color="g")
+        # Plot the minima, maximum and opening points.
+        self.add_points_to_plot([self.left_minima, self.right_minima], "g")
+        self.add_points_to_plot([self.maximum], "r")
+        self.add_points_to_plot([self.left_opening, self.right_opening], "c")
 
-        # Plot the maximum.
-        im_pt = self.line_to_image_space(self.maximum)
-        plt.plot(im_pt.x, im_pt.y, marker="+", linestyle="_",
-                color="r")
-
-        # Plot the opening points.
-        for line_point in [self.left_opening, self.right_opening]:
-            im_point = self.line_to_image_space(line_point)
-            plt.plot(im_point.x, im_point.y, marker="+", linestyle="_",
-                color="c")
-
-
-        # Start the third plot.
-        plt.subplot(233)
-
+    def profile_lines_plot(self, ax):
+        """Plot the intensity profile lines."""
         # Plot the individual line profiles and the average line profile line.
         for line_profile in self.ignored_line_profiles:
             plt.plot(line_profile.xs, line_profile.ys, color="0.7", lw=3)
@@ -317,14 +300,37 @@ class StomateOpening(object):
         plt.xlim((0, len(self.average_line_profile.xs)-1))
         plt.title("Stomate opening: {:.3f} microns".format(self.opening_distance))
 
-        # Start working on the fourth subplot.
-        plt.subplot2grid((2,3), (1, 0), colspan=3)
+    def stomate_zstack_closeup_plot(self, ax):
+        """Plot the stomate zstack close up."""
         im = self.zoom_collage()
         ax.grid(False)
-        plt.imshow(im, interpolation="none")
+        plt.imshow(im, interpolation="none", cmap=plt.cm.gray)
         ax.autoscale(False)
         plt.title("Z-slices: {}".format(
             [lp.identifier for lp in self.line_profiles]))
+
+    def plot(self):
+        """Create plot to verify that everything is sane."""
+        
+        # Initialise the figure.
+        fig = plt.figure(figsize=(20,12))
+
+        # First subplot.
+        ax = plt.subplot(231)
+        self.flourescent_plot(ax)
+
+        # Second subplot.
+        ax = plt.subplot(232)
+        self.brightfield_plot(ax)
+
+
+        # Third splot.
+        ax = plt.subplot(233)
+        self.profile_lines_plot(ax)
+
+        # Fourth subplot.
+        ax = plt.subplot2grid((2,3), (1, 0), colspan=3)
+        self.stomate_zstack_closeup_plot(ax)
 
 
 def calculate_opening(image_collection, stomate_id, timepoint):
