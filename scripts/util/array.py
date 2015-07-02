@@ -16,16 +16,6 @@ def local_minima(profile):
     return ((profile <= np.roll(profile, 1))
         & (profile <= np.roll(profile, -1)))
 
-def test_local_maxima():
-    ar = np.array([2, 1, 2, 3, 4, 2, 4, 1, 0,])
-    maxima = local_maxima(ar)
-    assert maxima.tolist() == [True, False, False, False, True, False, True, False, False]
-
-def test_local_minima():
-    ar = np.array([2, 1, 2, 3, 4, 2, 4, 1, 0,])
-    minima = local_minima(ar)
-    assert minima.tolist() == [False, True, False, False, False, True, False, False, True]
-
 def xy_arrays(profile, func):
     """Return x and y arrays of coordinates."""
     xs, = np.where( func(profile) )
@@ -100,6 +90,16 @@ def rmsd(ar1, ar2):
     return np.sqrt( np.sum( (ar1 - ar2)**2 )  / ar1.size )
 
 # Tests...
+
+def test_local_maxima():
+    ar = np.array([2, 1, 2, 3, 4, 2, 4, 1, 0,])
+    maxima = local_maxima(ar)
+    assert maxima.tolist() == [True, False, False, False, True, False, True, False, False]
+
+def test_local_minima():
+    ar = np.array([2, 1, 2, 3, 4, 2, 4, 1, 0,])
+    minima = local_minima(ar)
+    assert minima.tolist() == [False, True, False, False, False, True, False, False, True]
 
 def test_helf_height():
     p1 = Point2D(1.0, 3.4)
