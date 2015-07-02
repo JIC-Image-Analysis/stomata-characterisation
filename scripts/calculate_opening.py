@@ -82,9 +82,6 @@ class StomateOpening(object):
         fraction_to_exclude = 0.2
         exclude_int = int(round(len(zstack) * fraction_to_exclude / 2.))
         to_include = range(exclude_int, len(zstack)-exclude_int)
-        print "exclude_int", exclude_int
-        print "total range", range(len(zstack))
-        print "include range", to_include
 
         for i, zslice in enumerate(zstack):
             # Convert from cv2 points to scikit image points.
@@ -167,14 +164,56 @@ class StomateOpening(object):
         m = line.magnitude
         return self.minor_axis_p1 + line * (line_point.x / line.magnitude)
 
+    def zoom_image(self, zslice):
+        """Return a 100x100 image zoomed in on the stomate."""
+        # Create rgb image from zslice.
+        zslice = self.image_collection.image(
+            s=self.stomate.series,
+            c=2,
+            z=zslice)
+        rgb_im = np.dstack([zslice, zslice, zslice])
+
+        # Draw red opening line on rgb image.
+        pt1 = self.line_to_image_space(self.left_opening)
+        pt2 = self.line_to_image_space(self.right_opening)
+        rr, cc = skimage.draw.line(
+            int(round(pt1.y)),
+            int(round(pt1.x)),
+            int(round(pt2.y)),
+            int(round(pt2.x))
+        )
+        rgb_im[rr, cc] = (0, 255, 255)
+
+        # Get section of interest.
+        x, y = self.box[0]
+        offset = 50
+        selection = rgb_im[
+            y-offset:y+offset,
+            x-offset:x+offset
+            ]
+
+        return selection
+
+    def zoom_collage(self):
+        """Return a composite image of all the selected zslices."""
+        row0_ims = [self.zoom_image(lp.identifier)
+            for lp in self.line_profiles[:5]]
+        row0 = np.concatenate(row0_ims, axis=1)
+        row1_ims = [self.zoom_image(lp.identifier)
+            for lp in self.line_profiles[5:]]
+        row1 = np.concatenate(row0_ims, axis=1)
+
+        return np.concatenate([row0, row1])
+
+
     def plot(self):
         """Create plot to verify that everything is sane."""
         
         # Initialise the figure.
-        fig = plt.figure(figsize=(24,6))
+        fig = plt.figure(figsize=(20,12))
 
         # Start working on the first subplot.
-        ax = plt.subplot(131)
+        ax = plt.subplot(231)
         ax.grid(False)
 
         flourescent_zstack = self.image_collection.zstack_array(
@@ -183,7 +222,7 @@ class StomateOpening(object):
         projection = (normalise(projection) * 255).astype(np.uint8)
 
         # Add the projected image.
-        plt.imshow(projection, cmap=plt.cm.gray)
+        plt.imshow(projection, interpolation="none", cmap=plt.cm.gray)
         ax.autoscale(False)
 
         # Add the title for the first subplot.
@@ -196,7 +235,7 @@ class StomateOpening(object):
         ax.add_artist(ellipse)
 
         # Start working on the second subplot.
-        ax = plt.subplot(132)
+        ax = plt.subplot(232)
         ax.grid(False)
 
         brightfiled_zstack = self.image_collection.zstack_array(
@@ -205,7 +244,7 @@ class StomateOpening(object):
         projection = (normalise(projection) * 255).astype(np.uint8)
 
         # Add the projected image.
-        plt.imshow(projection, cmap=plt.cm.gray)
+        plt.imshow(projection, interpolation="none", cmap=plt.cm.gray)
         ax.autoscale(False)
 
         # Plot the ellipse.
@@ -243,7 +282,7 @@ class StomateOpening(object):
 
 
         # Start the third plot.
-        plt.subplot(133)
+        plt.subplot(233)
 
         # Plot the individual line profiles and the average line profile line.
         for line_profile in self.ignored_line_profiles:
@@ -277,6 +316,16 @@ class StomateOpening(object):
 
         plt.xlim((0, len(self.average_line_profile.xs)-1))
         plt.title("Stomate opening: {:.3f} microns".format(self.opening_distance))
+
+        # Start working on the fourth subplot.
+        plt.subplot2grid((2,3), (1, 0), colspan=3)
+        im = self.zoom_collage()
+        ax.grid(False)
+        plt.imshow(im, interpolation="none")
+        ax.autoscale(False)
+        plt.title("Z-slices: {}".format(
+            [lp.identifier for lp in self.line_profiles]))
+
 
 def calculate_opening(image_collection, stomate_id, timepoint):
     """Return the stomate opening in micro meters."""
