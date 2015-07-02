@@ -123,7 +123,17 @@ class StomateOpening(object):
             start = self.left_minima.x
             end = self.right_minima.x
             for i, line_profile in enumerate(self.line_profiles):
-                r = rmsd(line_profile.ys[start:end],
+                # Comparing the data in the data that has simply been
+                # normalised to the averaged that has been smoothed
+                # gives better z-slice selection than when comparing the
+                # data that has been smoothed with the smoothed average.
+                #
+                #r = rmsd(line_profile.smoothed_gaussian[start:end],
+                #    self.average_line_profile.ys[start:end])
+                #
+                # Presumably because smoothing makes the noisy out of
+                # focus zslices appear better than they really are.
+                r = rmsd(line_profile.normalised[start:end],
                     self.average_line_profile.ys[start:end])
                 if r > worst_rmsd:
                     worst_rmsd = r
