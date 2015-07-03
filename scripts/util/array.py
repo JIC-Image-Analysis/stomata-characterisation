@@ -22,6 +22,28 @@ def xy_arrays(profile, func):
     ys = np.take(profile, xs)
     return xs, ys
 
+def midpoint_minima(ar, mid_point):
+    """Return the two minima surrounding the mid point."""
+    min_xs, min_ys = xy_arrays(ar, local_minima)
+    left_min = None
+    right_min = None
+    for minima in min_xs:
+        left_min = right_min
+        right_min = minima
+        if (mid_point - minima) <= 0:
+            break
+    xs = [left_min, right_min]
+    ys = np.take(ar, xs)
+    return Point2D(xs[0], ys[0]), Point2D(xs[1], ys[1])
+
+def midpoint_maximum(ar, mid_point):
+    """Return the mid point maximum."""
+    left_min, right_min = midpoint_minima(ar, mid_point)
+    values_of_interest = ar[left_min.x:right_min.x+1]
+    max_xs, max_ys = xy_arrays(values_of_interest, local_maxima)
+    assert len(max_xs) == 1, "More than one maxima in between two neighboring minima!"
+    max_xs[0] += left_min.x
+    return Point2D(max_xs[0], max_ys[0])
 
 def half_height(pt1, pt2):
     """Return the half height of the peak."""

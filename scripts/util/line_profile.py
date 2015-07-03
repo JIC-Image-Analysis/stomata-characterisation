@@ -9,18 +9,16 @@ from jicimagelib.util.array import normalise
 
 from util.geometry import angle2vector
 
-from util.array import (
-    xy_arrays,
-    local_minima,
-    local_maxima,
-)
-
-
 class LineProfile(object):
     """Class for working with line profiles."""
 
     def __init__(self, ys, identifier=None):
-        self.ys = ys
+        if isinstance(ys, LineProfile):
+            # Create a LineProfile from a LineProfile.
+            self.ys = ys.ys
+        else:
+            # Create a line profile form a numpy array.
+            self.ys = ys
         self.identifier = identifier
 
     @property
@@ -36,12 +34,15 @@ class LineProfile(object):
     @property
     def normalised(self):
         """Return normalised line profile."""
-        return normalise(self.ys)
+        identifer = "normalised({})".format(self.identifier)
+        return LineProfile(normalise(self.ys), identifer)
 
     @property
     def smoothed_gaussian(self):
         """Return normalised Gaussian smoothed line profile."""
-        return scipy.ndimage.filters.gaussian_filter(self.normalised, 2.0)
+        ar = scipy.ndimage.filters.gaussian_filter(self.normalised.ys, 2.0)
+        identifer = "smoothed_gaussian({})".format(self.identifier)
+        return LineProfile(ar, identifer)
 
     def __repr__(self):
         return "<LineProfile(identifier={})>".format(self.identifier)
@@ -56,28 +57,6 @@ class LineProfileCollection(list):
         """Return the average line profile."""
         total = np.zeros(self[0].ys.shape, dtype=float)
         for line_profile in self:
-            total += getattr(line_profile, data)
-        return LineProfile(total / len(self))
-
-def midpoint_minima(profile):
-    """Return the two minima surrounding the mid point."""
-    min_xs, min_ys = xy_arrays(profile.ys, local_minima)
-    left_min = None
-    right_min = None
-    for minima in min_xs:
-        left_min = right_min
-        right_min = minima
-        if (profile.mid_point - minima) <= 0:
-            break
-    xs = [left_min, right_min]
-    ys = np.take(profile.ys, xs)
-    return Point2D(xs[0], ys[0]), Point2D(xs[1], ys[1])
-
-def midpoint_maximum(profile):
-    """Return the mid point maximum."""
-    left_min, right_min = midpoint_minima(profile)
-    values_of_interest = profile.ys[left_min.x:right_min.x+1]
-    max_xs, max_ys = xy_arrays(values_of_interest, local_maxima)
-    assert len(max_xs) == 1, "More than one maxima in between two neighboring minima!"
-    max_xs[0] += left_min.x
-    return Point2D(max_xs[0], max_ys[0])
+            total += getattr(line_profile, data).ys
+        average = total / float(len(self))
+        return LineProfile(average, "average")
