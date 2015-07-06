@@ -10,14 +10,46 @@ HERE = os.path.dirname(__file__)
 UNPACK = os.path.join(HERE, '..', '..', 'data', 'unpack')
 
 STOMATA = (
-    dict(center=(119, 141), series=range(8, 15), scale_factor=0.1571),     # Stomata id 1
-    dict(center=(420, 257), series=range(8, 15), scale_factor=0.1571),    # Stomata id 2
-    dict(center=(219, 426), series=range(8, 15), scale_factor=0.1571),    # Stomata id 3
-    dict(center=(329, 127), series=range(15, 24), scale_factor=0.1789),    # Stomata id 4
-    dict(center=(396, 325), series=range(15, 24), scale_factor=0.1789),   # Stomata id 5
-    dict(center=(89, 376), series=range(15, 24), scale_factor=0.1789),   # Stomata id 6
-    dict(center=(153, 120), series=range(24, 36), scale_factor=0.1561),   # Stomata id 7
-    dict(center=(305, 349), series=range(24, 36), scale_factor=0.1561),    # Stomata id 8
+    dict(center=(119, 141),
+        series=range(8, 15),
+        scale_factor=0.1571,
+        zslice_include=range(6, 25),
+    ),  # Stomata id 1
+    dict(center=(420, 257),
+        series=range(8, 15),
+        scale_factor=0.1571,
+        zslice_include=range(6, 25),
+    ),  # Stomata id 2
+    dict(center=(219, 426),
+        series=range(8, 15),
+        scale_factor=0.1571,
+        zslice_include=range(6, 25),
+    ),  # Stomata id 3
+    dict(center=(329, 127),
+        series=range(15, 24),
+        scale_factor=0.1789,
+        zslice_include=range(6, 25),
+    ),  # Stomata id 4
+    dict(center=(396, 325),
+        series=range(15, 24),
+        scale_factor=0.1789,
+        zslice_include=range(6, 25),
+    ),  # Stomata id 5
+    dict(center=(89, 376),
+        series=range(15, 24),
+        scale_factor=0.1789,
+        zslice_include=range(6, 25),
+    ),  # Stomata id 6
+    dict(center=(153, 120),
+        series=range(24, 36),
+        scale_factor=0.1561,
+        zslice_include=range(6, 25),
+    ),  # Stomata id 7
+    dict(center=(305, 349),
+        series=range(24, 36),
+        scale_factor=0.1561,
+        zslice_include=range(6, 25),
+    ),  # Stomata id 8
 )
 
 class BaseStomate(object):
