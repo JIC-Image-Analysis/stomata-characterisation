@@ -39,10 +39,9 @@ class LineProfile(object):
         identifer = "normalised({})".format(self.identifier)
         return LineProfile(normalise(self.ys), identifer)
 
-    @property
-    def smoothed_gaussian(self):
+    def smoothed_gaussian(self, sigma):
         """Return normalised Gaussian smoothed line profile."""
-        ar = scipy.ndimage.filters.gaussian_filter(self.ys, 1.0)
+        ar = scipy.ndimage.filters.gaussian_filter(self.ys, sigma=sigma)
         identifer = "smoothed_gaussian({})".format(self.identifier)
         return LineProfile(ar, identifer)
 

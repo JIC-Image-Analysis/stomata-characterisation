@@ -45,10 +45,11 @@ from stomata_finder import find_stomate_ellipse_box
 class StomateOpening(object):
     """Class for calculating the stomate opening."""
     
-    def __init__(self, image_collection, stomate_id, timepoint):
+    def __init__(self, image_collection, stomate_id, timepoint, sigma):
         self.image_collection = image_collection
         self.stomata_timeseries = stomata_timeseries_lookup(stomate_id)
         self.stomate = self.stomata_timeseries.stomate_at_timepoint(timepoint)
+        self.sigma = sigma
         
         self.ellipse_box_init()
         self.minor_axis_pts_init()
@@ -114,20 +115,20 @@ class StomateOpening(object):
         """Calculate the minima surrounding the opening and the maxium within."""
         self.left_minima, \
         self.right_minima = midpoint_minima(
-            self.average_line_profile.smoothed_gaussian.ys,
+            self.average_line_profile.smoothed_gaussian(self.sigma).ys,
             self.average_line_profile.mid_point)
         self.maximum = midpoint_maximum(
-            self.average_line_profile.smoothed_gaussian.ys,
+            self.average_line_profile.smoothed_gaussian(self.sigma).ys,
             self.average_line_profile.mid_point)
         assert self.left_minima.x < self.maximum.x, "Left minima to the right of the maximum."
 
     def opening_pts_init(self):
         """Initialise the opening points."""
         self.left_opening = peak_half_height(
-            self.average_line_profile.smoothed_gaussian.ys,
+            self.average_line_profile.smoothed_gaussian(self.sigma).ys,
             self.left_minima, self.maximum)
         self.right_opening = peak_half_height(
-            self.average_line_profile.smoothed_gaussian.ys,
+            self.average_line_profile.smoothed_gaussian(self.sigma).ys,
             self.maximum, self.right_minima)
 
     def opening_distance_init(self):
@@ -289,7 +290,7 @@ class StomateOpening(object):
         plt.plot(self.average_line_profile.xs, self.average_line_profile.ys,
             lw=3, color="0.3")
         plt.plot(self.average_line_profile.xs,
-            self.average_line_profile.smoothed_gaussian.ys,
+            self.average_line_profile.smoothed_gaussian(self.sigma).ys,
             lw=3, color="b")
 
         # Plot the midpoint line.
@@ -346,9 +347,9 @@ class StomateOpening(object):
         self.stomate_zstack_closeup_plot(ax)
 
 
-def calculate_opening(image_collection, stomate_id, timepoint):
+def calculate_opening(image_collection, stomate_id, timepoint, sigma):
     """Return the stomate opening in micro meters."""
-    stomate_opening = StomateOpening(image_collection, stomate_id, timepoint)
+    stomate_opening = StomateOpening(image_collection, stomate_id, timepoint, sigma)
     stomate_opening.plot()
 
 def main():
@@ -356,12 +357,14 @@ def main():
     parser.add_argument('confocal_file', help='File containing confocal data')
     parser.add_argument('stomate_id', type=int, help='Zero based stomata index')
     parser.add_argument('timepoint', type=int, help='Zero based time point index')
+    parser.add_argument('-s', '--sigma', type=float, default=1.0,
+        help='Average line Guassian smoothing factor (default 1.0)')
 
     args = parser.parse_args()
     AutoWrite.on = False
 
     image_collection = unpack_data(args.confocal_file)
-    calculate_opening(image_collection, args.stomate_id, args.timepoint)
+    calculate_opening(image_collection, args.stomate_id, args.timepoint, args.sigma)
     plt.show()
 
 if __name__ == "__main__":
