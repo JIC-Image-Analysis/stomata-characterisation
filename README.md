@@ -4,10 +4,33 @@ This code is intended to locate stomata in confocal image stacks.
 
 ## Installation
 
+Install ``freeimage``.
 
-## Data
+Install the Python dependencies.
+
+```
+numpy==1.9.2
+scipy==0.15.1
+matplotlib==1.4.3
+scikit-image==0.11.3
+cv2==2.4.7
+jicimagelib=0.3.1
+```
+
+Clone this repository.
+
+```
+git clone git@githq.nbi.ac.uk:rg-matthew-hartley/find-stomata.git
+```
 
 ## Run analysis
+
+Create a data directory structure.
+
+```
+cd find-stomata
+mkdir -p data/raw
+```
 
 Place the ``2014-03-20-Lti6b-GFP-ABA-time-series.lif`` file the directory
 ``data/raw``.
