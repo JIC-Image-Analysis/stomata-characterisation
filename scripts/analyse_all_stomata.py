@@ -36,7 +36,8 @@ def main():
             stomata_timeseries = stomata_timeseries_lookup(i)
             for timepoint, s in enumerate(stomata_timeseries.series):
 
-                stomate_opening = StomateOpening(image_collection, i, timepoint)
+                stomate_opening = StomateOpening(image_collection, i,
+                    timepoint, sigma=1.0)
 
                 # Write csv file.
                 csv_line = "{},{},{:.3f}\n".format(
