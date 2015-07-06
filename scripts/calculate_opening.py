@@ -98,9 +98,7 @@ class StomateOpening(object):
 
     def exclude_top_and_bottom_zslices_init(self):
         """Exclude top and bottom zslices."""
-        fraction_to_exclude = 0.4
-        exclude_int = int(round(len(self.line_profiles) * fraction_to_exclude / 2.))
-        to_include = set(range(exclude_int, len(self.line_profiles)-exclude_int))
+        to_include = set(self.stomate.zslice_include)
         to_exclude = set(range(len(self.line_profiles))) - to_include
 
         while len(to_exclude) > 0:
