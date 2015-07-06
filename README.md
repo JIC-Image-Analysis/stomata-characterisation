@@ -2,54 +2,46 @@
 
 This code is intended to locate stomata in confocal image stacks.
 
-## Discussion
+## Installation
 
-We started out by identifying the stomata outlines. For example in series 8 we
-know that region 9 represent stomata number 1.
 
-```
-python scripts/find_stomata.py data/raw/2014-03-20-Lti6b-GFP-ABA-time-series.lif 8 9
-```
+## Data
 
-We can then look at the bright field profile lines across all z-slices for a
-particular stomata at a particular time point. For example stomata 1 at its
-first time point.
+## Run analysis
 
-```
-python scripts/plot_profile_lines.py data/raw/2014-03-20-Lti6b-GFP-ABA-time-series.lif 0 0
-```
+Place the ``2014-03-20-Lti6b-GFP-ABA-time-series.lif`` file the directory
+``data/raw``.
 
-We can then calculate the opening from the average bright field peak.
-For example for stomata 1 at its first time point.
+Run the ``analyse_all_stomata.py`` script.
 
 ```
-python scripts/calculate_opening.py data/raw/2014-03-20-Lti6b-GFP-ABA-time-series.lif 0 -t 0
+python scripts/analyse_all_stomata.py data/raw/2014-03-20-Lti6b-GFP-ABA-time-series.lif out
 ```
 
-Or for all time points in a particular stomata. For example stomata 1.
+This produces the output directory ``out``.
+
+Inspect the images that show the stomata opening analysis performed.
 
 ```
-python scripts/calculate_opening.py data/raw/2014-03-20-Lti6b-GFP-ABA-time-series.lif 0
+out/opening_stomate_1_timepoint_0.png
+...
 ```
 
-Finally to view the calculated opening across all z-slices for a particular
-stomata we can generate augmented images.
+Note that the algorithm does not find the correct minima for 
 
 ```
-python scripts/generate_augmented_zstack_images.py data/raw/2014-03-20-Lti6b-GFP-ABA-time-series.lif 0 0 -d tmp
+out/opening_stomate_8_timepoint_0.png
 ```
 
-The images can be view using a viewer such as ``eye/viewer``:
-
-https://github.com/mrmh2/eye/blob/master/lib/viewer.py
-
-
-## Testing
-
-To test that things are working as expected. Put the
-``2014-03-20-Lti6b-GFP-ABA-time-series.lif`` file in the ``data/raw``
-directory. Then run the tests using ``nosetests``.
+Re-run the analysis for this stomate and time point with a higher Gaussian
+sigma smoothing for the average profile line.
 
 ```
-nosetests
+python scripts/calculate_opening.py data/raw/2014-03-20-Lti6b-GFP-ABA-time-series.lif 7 0 -s 2
 ```
+
+Note that the stomate identifier is zero-indexed in the command above, i.e. 7
+represents stomate 8.
+
+Update the opening value for stomate 8 time point zero in the csv file
+``out/stomata_openings.csv``.
