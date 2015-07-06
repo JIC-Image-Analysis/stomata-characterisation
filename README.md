@@ -68,3 +68,9 @@ represents stomate 8.
 
 Update the opening value for stomate 8 time point zero in the csv file
 ``out/stomata_openings.csv``.
+
+## Configuration
+
+Configurations such as the stomate center, scale factor, z-slices to be
+included, etc, are located in the global variable ``util.STOMATA`` in the file
+``scripts/util/__init__.py``.
