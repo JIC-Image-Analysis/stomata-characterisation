@@ -31,19 +31,30 @@ def main():
 
     csv_fpath = os.path.join(AutoName.directory, "stomata_openings.csv")
     with open(csv_fpath, "w") as fh:
-        fh.write("StomateId,Timepoint,Opening(uM)\n")
+
+        fh.write( '# Dimensions are in um\n' )
+        fh.write( "# StomaId  TimepointId  StomaLength  StomaWidth  PoreWidth\n\n\n" )
+
         for i in range(len(STOMATA)):
             stomata_timeseries = stomata_timeseries_lookup(i)
+            umperpx = stomata_timeseries.scale_factor
+
             for timepoint, s in enumerate(stomata_timeseries.series):
 
                 stomate_opening = StomateOpening(image_collection, i,
                     timepoint, sigma=1.0)
 
+                # 0 is centre, 1 is dimensions, 2 is angle
+                length_px, width_px = max( stomate_opening.box[1] ), min( stomate_opening.box[1] )
+
                 # Write csv file.
-                csv_line = "{},{},{:.3f}\n".format(
-                    stomate_opening.stomate.stomate_id,
-                    stomate_opening.stomate.timepoint_id,
-                    stomate_opening.opening_distance)
+                csv_line = "{}  {}  {:.3f}  {:.3f}  {:.3f}\n".format(
+                    stomate_opening.stomate.stomate_id,                 # is 1-based
+                    stomate_opening.stomate.timepoint_id + 1,           # make 1-based
+                    length_px * umperpx,
+                    width_px * umperpx,
+                    stomate_opening.opening_distance )
+
                 fh.write(csv_line)
 
                 # Save figure.
@@ -53,6 +64,8 @@ def main():
                 fpath = os.path.join(AutoName.directory, fname)
                 plt.savefig(fpath)
                 plt.close()
+
+            fh.write( '\n\n' )
 
 if __name__ == "__main__":
     main()

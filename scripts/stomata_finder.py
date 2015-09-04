@@ -30,7 +30,7 @@ from util import (
 
 from util.transform import (
     find_connected_components,
-) 
+)
 
 from util.geometry import (
     ellipse_box,
@@ -127,8 +127,7 @@ def main():
     image_collection = unpack_data(args.confocal_file)
     raw_zstack = image_collection.zstack_array(s=args.series, c=0)
 
-    box = find_stomate_ellipse_box(raw_zstack, args.x, args.y) 
-
+    box = find_stomate_ellipse_box(raw_zstack, args.x, args.y)
 
     projected = max_intensity_projection(raw_zstack)
     annotate_with_ellipse_box(projected, box)
@@ -156,11 +155,11 @@ def test_all():
             projected = max_intensity_projection(raw_zstack)
             gray_uint8 = normalise(projected) * 255
             annotation_array = np.dstack([gray_uint8, gray_uint8, gray_uint8])
-            box = find_stomate_ellipse_box(raw_zstack, stomate.x, stomate.y) 
+            box = find_stomate_ellipse_box(raw_zstack, stomate.x, stomate.y)
             cv2.ellipse(annotation_array, box, (255, 0, 0))
             scipy.misc.imsave(fpath, annotation_array)
 
-    
+
 if __name__ == "__main__":
     main()
 
