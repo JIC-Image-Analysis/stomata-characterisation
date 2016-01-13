@@ -54,7 +54,7 @@ class StomateOpening(object):
         self.ellipse_box_init()
         self.minor_axis_pts_init()
         self.line_profiles_init()
-        self.exclude_top_and_bottom_zslices_init()
+#       self.exclude_top_and_bottom_zslices_init()
         self.opening_pts_init()
         self.opening_distance_init()
 
@@ -314,6 +314,76 @@ class StomateOpening(object):
         plt.xlim((0, len(self.average_line_profile.xs)-1))
         plt.title("Stomate opening: {:.3f} microns".format(self.opening_distance))
 
+    def alt_profile_lines_plot(self, ax):
+        """Plot the intensity profile lines."""
+        ax.get_xaxis().set_visible(False)
+        ax.get_yaxis().set_visible(False)
+
+        plt.xlim((0, len(self.average_line_profile.xs)-1))
+
+        # Plot the individual line profiles and the average line profile line.
+        for line_profile in self.line_profiles:
+            if line_profile.include:
+                plt.plot(line_profile.xs, line_profile.normalised.ys,
+                    lw=2, color="0.75")
+        plt.plot(self.average_line_profile.xs,
+            self.average_line_profile.smoothed_gaussian(self.sigma).ys,
+            lw=4, color="0.3")
+
+        arrowprops=dict(arrowstyle="->", facecolor="white",
+                        connectionstyle="angle3,angleA=0,angleB=90")
+
+        # Plot the minima.
+        plt.annotate("", xy=(self.left_minima.x, self.left_minima.y),
+                     xytext=(70, 0.01), arrowprops=arrowprops) 
+        plt.annotate("Local minima", xy=(self.right_minima.x, self.right_minima.y),
+                     xytext=(70, 0.01), arrowprops=arrowprops,
+                     fontsize=16) 
+
+        # Plot the maximum.
+        plt.annotate("Local maximum", xy=(self.maximum.x, self.maximum.y),
+                     xytext=(5, 0.01), arrowprops=arrowprops,
+                     fontsize=16)
+
+        # Plot opening points.
+        plt.text(self.left_opening.x, 0.57, "Opening", fontsize=16)
+        plt.annotate("", xy=(self.left_opening.x, 0.55),
+                     xytext=(self.right_opening.x, 0.55),
+                     arrowprops=dict(arrowstyle="<->", lw=2))
+
+        plt.plot([self.left_opening.x, self.left_opening.x],
+                   [self.left_opening.y, 0.55], lw=2, color="0.")
+        plt.plot([self.right_opening.x, self.right_opening.x],
+                   [self.right_opening.y, 0.55], lw=2, color="0.")
+
+
+        subax = plt.axes([0.1, 0.55, 0.34, 0.34], axisbg="none")
+        subax.get_xaxis().set_visible(False)
+        subax.get_yaxis().set_visible(False)
+
+        brightfiled_zstack = self.image_collection.zstack_array(
+            s=self.stomate.series, c=2)
+        projection = max_intensity_projection(brightfiled_zstack)
+        projection = (normalise(projection) * 255).astype(np.uint8)
+
+#       plt.imshow(projection, interpolation="none", cmap=plt.cm.gray)
+        plt.imshow(projection, cmap=plt.cm.gray)
+         
+        plt.autoscale(False)
+        plt.grid(False)
+
+#       ellipse = Ellipse(self.box[0], self.box[1][0], self.box[1][1],
+#           self.box[2], fill=False, lw=1.2, color="y")
+#       subax.add_artist(ellipse)
+
+        # Plot the minor axis of the ellipse.
+        plt.plot(
+            [self.minor_axis_p1.x, self.minor_axis_p2.x],
+            [self.minor_axis_p1.y, self.minor_axis_p2.y],
+            color="m", lw=2)
+        
+        
+
     def stomate_zstack_closeup_plot(self, ax):
         """Plot the stomate zstack close up."""
         im = self.zoom_collage()
@@ -346,11 +416,15 @@ class StomateOpening(object):
         ax = plt.subplot2grid((2,3), (1, 0), colspan=3)
         self.stomate_zstack_closeup_plot(ax)
 
+    def alt_plot(self):
+        ax = plt.subplot(111)
+        self.alt_profile_lines_plot(ax)
 
 def calculate_opening(image_collection, stomate_id, timepoint, sigma):
     """Return the stomate opening in micro meters."""
     stomate_opening = StomateOpening(image_collection, stomate_id, timepoint, sigma)
-    stomate_opening.plot()
+#   stomate_opening.plot()
+    stomate_opening.alt_plot()
 
 def main():
     parser = argparse.ArgumentParser(__doc__)
@@ -364,8 +438,10 @@ def main():
     AutoWrite.on = False
 
     image_collection = unpack_data(args.confocal_file)
+    fig = plt.figure()
     calculate_opening(image_collection, args.stomate_id, args.timepoint, args.sigma)
     plt.show()
+    fig.savefig("stomate_illustration.png")
 
 if __name__ == "__main__":
     main()
