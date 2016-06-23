@@ -44,13 +44,13 @@ from stomata_finder import find_stomate_ellipse_box
 
 class StomateOpening(object):
     """Class for calculating the stomate opening."""
-    
+
     def __init__(self, image_collection, stomate_id, timepoint, sigma):
         self.image_collection = image_collection
         self.stomata_timeseries = stomata_timeseries_lookup(stomate_id)
         self.stomate = self.stomata_timeseries.stomate_at_timepoint(timepoint)
         self.sigma = sigma
-        
+
         self.ellipse_box_init()
         self.minor_axis_pts_init()
         self.line_profiles_init()
@@ -70,7 +70,7 @@ class StomateOpening(object):
         center, bounds, angle = self.box
         width, height = bounds
         self.minor_axis_p1, self.minor_axis_p2 = line(center, angle, width)
-        
+
     def line_profiles_init(self):
         """Initialise the stomata minor axis line profiles."""
         self.line_profiles = LineProfileCollection()
@@ -157,7 +157,7 @@ class StomateOpening(object):
             )
             im[rr, cc] = rgb_color
             return im
-            
+
         # Create rgb image from zslice.
         zslice = self.image_collection.image(
             s=self.stomate.series,
@@ -222,7 +222,7 @@ class StomateOpening(object):
         ellipse = Ellipse(self.box[0], self.box[1][0], self.box[1][1],
             self.box[2], fill=False, lw=1.2, color="y")
         ax.add_artist(ellipse)
-        
+
     def flourescent_plot(self, ax):
         """Plot the fluorescent channel."""
         flourescent_zstack = self.image_collection.zstack_array(
@@ -257,7 +257,7 @@ class StomateOpening(object):
         projection = (normalise(projection) * 255).astype(np.uint8)
 
         plt.imshow(projection, interpolation="none", cmap=plt.cm.gray)
-         
+
         ax.autoscale(False)
         ax.grid(False)
 
@@ -335,10 +335,10 @@ class StomateOpening(object):
 
         # Plot the minima.
         plt.annotate("", xy=(self.left_minima.x, self.left_minima.y),
-                     xytext=(70, 0.01), arrowprops=arrowprops) 
+                     xytext=(70, 0.01), arrowprops=arrowprops)
         plt.annotate("Local minima", xy=(self.right_minima.x, self.right_minima.y),
                      xytext=(70, 0.01), arrowprops=arrowprops,
-                     fontsize=16) 
+                     fontsize=16)
 
         # Plot the maximum.
         plt.annotate("Local maximum", xy=(self.maximum.x, self.maximum.y),
@@ -368,7 +368,7 @@ class StomateOpening(object):
 
 #       plt.imshow(projection, interpolation="none", cmap=plt.cm.gray)
         plt.imshow(projection, cmap=plt.cm.gray)
-         
+
         plt.autoscale(False)
         plt.grid(False)
 
@@ -381,8 +381,8 @@ class StomateOpening(object):
             [self.minor_axis_p1.x, self.minor_axis_p2.x],
             [self.minor_axis_p1.y, self.minor_axis_p2.y],
             color="m", lw=2)
-        
-        
+
+
 
     def stomate_zstack_closeup_plot(self, ax):
         """Plot the stomate zstack close up."""
@@ -395,7 +395,7 @@ class StomateOpening(object):
 
     def plot(self):
         """Create plot to verify that everything is sane."""
-        
+
         # Initialise the figure.
         fig = plt.figure(figsize=(20,12))
 
@@ -417,6 +417,7 @@ class StomateOpening(object):
         self.stomate_zstack_closeup_plot(ax)
 
     def alt_plot(self):
+        fig = plt.figure(figsize=(8,4))
         ax = plt.subplot(111)
         self.alt_profile_lines_plot(ax)
 
