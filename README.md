@@ -21,7 +21,7 @@ jicimagelib=0.3.1
 Clone this repository.
 
 ```
-git clone git@githq.nbi.ac.uk:rg-matthew-hartley/find-stomata.git
+git clone https://github.com/JIC-Image-Analysis/stomata-characterisation
 ```
 
 ## Run analysis
@@ -29,17 +29,17 @@ git clone git@githq.nbi.ac.uk:rg-matthew-hartley/find-stomata.git
 Create a data directory structure.
 
 ```
-cd find-stomata
+cd stomata-characterisation
 mkdir -p data/raw
 ```
 
-Place the ``2014-03-20-Lti6b-GFP-ABA-time-series.lif`` file the directory
+Place the ``image.lif`` file the directory
 ``data/raw``.
 
 Run the ``analyse_all_stomata.py`` script.
 
 ```
-python scripts/analyse_all_stomata.py data/raw/2014-03-20-Lti6b-GFP-ABA-time-series.lif out
+python scripts/analyse_all_stomata.py data/raw/image.lif out
 ```
 
 This produces the output directory ``out``.
@@ -61,7 +61,7 @@ Re-run the analysis for this stomate and time point with a higher Gaussian
 sigma smoothing for the average profile line.
 
 ```
-python scripts/calculate_opening.py data/raw/2014-03-20-Lti6b-GFP-ABA-time-series.lif 7 0 -s 2
+python scripts/calculate_opening.py data/raw/image.lif 7 0 -s 2
 ```
 
 Note that the stomate identifier is zero-indexed in the command above, i.e. 7
