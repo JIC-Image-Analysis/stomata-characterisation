@@ -1,4 +1,4 @@
-# Stomata finding
+# Stomata characterisation
 
 This code is intended to determine how open a stoma is from a stack of
 brightfield images.
