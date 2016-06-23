@@ -1,6 +1,7 @@
 # Stomata finding
 
-This code is intended to locate stomata in confocal image stacks.
+This code is intended to determine how open a stoma is from a stack of
+brightfield images.
 
 ## Installation
 
